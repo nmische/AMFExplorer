@@ -1,0 +1,129 @@
+<project name="amfexplorer" default="make-dist-zip" basedir=".">
+	<description>amfexplorer build file</description>
+			
+	<property file="branch.properties" />
+	<xmlproperty file="src/install.rdf" />
+	
+	<!-- project directories -->
+	<property name="src.dir" location="src" />
+	<property name="build.dir" location="build" />
+	<property name="dist.dir" location="dist" />
+
+	<property name="excludes" value="**/.*, **/*.jar, **/*.db" />
+	<property name="name" value="${ant.project.name}" />
+	<property name="extension.id" value="${RDF.Description.em:id}" />
+	<property name="extension.version" value="${RDF.Description.em:version}" />
+	
+	<target name="local-check" description="check to see if a local.properties file exists">
+        <available file="${basedir}/local.properties" property="local.properties.available"/>
+    </target>
+
+	<target name="properties-local" if="local.properties.available" depends="local-check">
+    	<echo message="Loading local properties file."/>
+    	<property file="local.properties"/>
+    </target>
+
+    <target name="no-properties-local" unless="local.properties.available" depends="local-check">
+        <echo message="No local properties file, setting defaults."/>
+        <!-- set these values -->
+		<property name="install.dir" value="OperatingSystemPathToTestPofile"/>
+       	<property name="profile.name" value="NameOfTestProfile" />
+    </target>
+
+	<!-- targets for incremental builds -->	
+	
+	<target name="clean-reg" description="delete compreg.dat to reload service" >
+		<delete file="${install.dir}/compreg.dat"/>
+	</target>
+
+	<target name="copy-to-extensions" depends="clean-reg,properties-local,no-properties-local" description="copies extension files to profle">
+        <copy todir="${install.dir}/extensions/${extension.id}" >
+            <fileset dir="${src.dir}" excludes="**/*.gif" />
+        </copy>
+		<copy todir="${install.dir}/extensions/${extension.id}" >
+            <fileset dir="${src.dir}" includes="**/*.gif" />
+		</copy>
+    </target>
+		
+	<target name="incremental-ff" depends="copy-to-extensions" description="builds a development version of the firefox extension and copies to profile" />
+	
+	<!-- targets used for creating a distribution -->
+	<target name="set-up-build" depends="clean" description="sets up build directory">
+		<mkdir dir="${build.dir}" />
+	</target>
+	
+	<target name="build-chrome-jar" depends="set-up-build" description="create the xpi chrome contents including the chrome jar">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.dir}/jar" />
+		<mkdir dir="${build.dir}/chrome" />
+
+		<copy todir="${build.dir}/jar">
+			<fileset dir="${src.dir}/chrome" includes="content/**, locale/**, skin/**" excludes="${excludes}, **/*.gif"/>
+		</copy>
+		
+		<copy todir="${build.dir}/jar">
+			<fileset dir="${src.dir}/chrome" includes="**/*.gif" />
+		</copy>
+		
+		<!-- remove trace statements -->
+		<replaceregexp file="${build.dir}/jar/content/amfexplorer/amfExplorer.js"
+				match="\n\s*if\s*\(FBTrace[^;]+;" 
+				replace="" 
+				flags="g" />
+		 
+		
+	</target>	
+		
+	<target name="jar-chrome-jar" depends="build-chrome-jar">
+				
+		<zip destfile="${build.dir}/chrome/${name}.jar" 
+			update="true"
+			basedir="${build.dir}/jar"
+			includes="**" />
+		
+		<delete dir="${build.dir}/jar" />	
+		
+	</target>
+	
+	<target name="build-xpi-defaults" depends="jar-chrome-jar" description="create the xpi defaults contents">
+		<mkdir dir="${build.dir}/defaults" />		
+
+		<copy todir="${build.dir}/defaults">
+			<fileset dir="${src.dir}/defaults" />
+		</copy>		
+	</target>	
+
+	<target name="build-xpi" depends="build-xpi-defaults" description="create root xpi contents">
+		
+		<copy file="${src.dir}/install.rdf" toDir="${build.dir}" />
+		<copy file="${src.dir}/chrome.manifest" toDir="${build.dir}" />
+		<!--
+ 		Need to include the space because "chrome/" recursively matches (replace is stupid). 
+		-->
+		<replace file="${build.dir}/chrome.manifest" token=" chrome/" value=" jar:chrome/${name}.jar!/" />	
+	</target>
+
+	<target name="set-up-dist" depends="build-xpi" description="sets up dist directory">
+		<mkdir dir="${dist.dir}" />
+	</target>
+
+	<target name="make-xpi-dist" depends="set-up-dist" description="generate the xpi for distribution">
+		<zip destfile="${dist.dir}/${name}_v${extension.version}.xpi">
+			<zipfileset dir="${build.dir}" includes="**" />
+		</zip>
+	</target>
+	
+	<target name="make-dist-zip" depends="make-xpi-dist" description="zip up the distribution">
+		<mkdir dir="${dist.dir}/zip" />
+		<zip destfile="${dist.dir}/zip/${name}_v${extension.version}.zip">
+			<zipfileset dir="${dist.dir}" includes="**" excludes="zip/**" />
+		</zip>
+	</target>
+	
+	<target name="clean" description="clean up">
+		<!-- Delete the ${build.dir} and ${dist.dir} directory trees -->
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />		
+	</target>
+
+</project>
