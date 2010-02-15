@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="1024" minHeight="768">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import vo.TestVO;
+			
+			protected function faultHandler(e:FaultEvent):void
+			{
+				mx.controls.Alert.show(e.fault.faultString);
+			}
+			
+			protected function resultHandler(e:ResultEvent):void
+			{
+				mx.controls.Alert.show(e.result.result);
+			}
+			
+			// Null			
+			protected function button01_clickHandler(event:MouseEvent):void
+			{
+				var input:Object = null;
+				testService.testEcho(input);	
+			}		
+			
+			// False			
+			protected function button02_clickHandler(event:MouseEvent):void
+			{
+				var input:Object = false;
+				testService.testEcho(input);	
+			}
+			
+			// True						
+			protected function button03_clickHandler(event:MouseEvent):void
+			{
+				var input:Object = true;
+				testService.testEcho(input);	
+			}
+			
+			// Integer			
+			protected function button04_clickHandler(event:MouseEvent):void
+			{
+				var input:int = 1976;
+				testService.testEcho(input);	
+			}
+						
+			// Double			
+			protected function button05_clickHandler(event:MouseEvent):void
+			{
+				var input:Number = 468468468;
+				testService.testEcho(input);	
+			}
+			
+			// String
+			protected function button06_clickHandler(event:MouseEvent):void
+			{
+				var input:String = "This is a test";
+				testService.testEcho(input);	
+			}
+			
+			// XML Document
+			protected function button07_clickHandler(event:MouseEvent):void
+			{
+				var input:XMLDocument = new XMLDocument('<books><book ISBN="1590595181"><title>Foundation ActionScript Animation: Making Things Move</title><author>Keith Peters</author><amazonUrl>http://tinyurl.com/npuxt</amazonUrl><pageCount>470</pageCount></book></books>');
+				testService.testEcho(input);	
+			}
+			
+			// Date
+			protected function button08_clickHandler(event:MouseEvent):void
+			{
+				var input:Date = new Date();
+				testService.testEcho(input);	
+			}
+			
+			// Array
+			protected function button09_clickHandler(event:MouseEvent):void
+			{
+				var input:Array = ["ItemOne","ItemTwo","ItemThree"];
+				testService.testEcho(input);
+			}
+			
+			// Object			
+			protected function button10_clickHandler(event:MouseEvent):void
+			{
+				var input:Object = {keyOne:"TestOne",keyTwo:"TestTwo"};
+				testService.testEcho(input);
+			}
+			
+			// XML
+			protected function button11_clickHandler(event:MouseEvent):void
+			{
+				var input:XML = 
+					<books>
+						<book ISBN="1590595181">
+							<title>Foundation ActionScript Animation: Making Things Move</title>
+							<author>Keith Peters</author>
+	
+							<amazonUrl>http://tinyurl.com/npuxt</amazonUrl>
+							<pageCount>470</pageCount>
+						</book>
+						<book ISBN="1582346194">
+							<title>Send in the Idiots: Stories from the Other Side of Autism</title>
+	
+							<author>Kamran Nazeer</author>
+							<amazonUrl>http://tinyurl.com/lo5ts</amazonUrl>
+							<pageCount>500</pageCount>
+	
+						</book>
+					</books>;
+				testService.testEcho(input);	
+			}
+			
+			// ByteArray	
+			protected function button12_clickHandler(event:MouseEvent):void
+			{
+				var input:ByteArray = new ByteArray(); 
+				input.writeUTFBytes("This is a test.");
+				testService.testEcho(input);	
+			}
+			
+			// Multiple ArrayCollections			
+			protected function button13_clickHandler(event:MouseEvent):void
+			{
+							
+				var obj1:TestVO = new TestVO();
+				obj1.id = 1;
+				obj1.name = "Test Object 1";
+				
+				var obj2:TestVO = new TestVO();
+				obj2.id = 2;
+				obj2.name = "Test Object 2";
+				
+				var col1:ArrayCollection = new ArrayCollection();				
+				col1.addItem(obj1);
+				col1.addItem(obj2);
+				
+				var col2:ArrayCollection = new ArrayCollection();				
+				col2.addItem(obj1);
+				col2.addItem(obj2);
+				
+				var input:Array = [col1,col2];
+				
+				testService.testEcho(input);				
+				
+			}			
+
+		]]>
+	</mx:Script>
+	
+	<mx:ChannelSet id="myAMFChannelSet">
+		<mx:channels>
+			<mx:AMFChannel
+				url="http://\{server.name\}:\{server.port\}/flex2gateway"
+				id="cfAMF"/>				
+		</mx:channels>
+	</mx:ChannelSet>
+	
+	<mx:RemoteObject
+		id="testService"
+		source="amfexplorer.services.testService"
+		destination="ColdFusion"
+		channelSet="{myAMFChannelSet}" 
+		result="resultHandler"
+		fault="faultHandler" />
+	
+	<mx:VBox paddingTop="10" paddingLeft="10" verticalGap="5">
+		
+		<mx:Button id="button01" label="Null" click="button01_clickHandler(event)" />
+		
+		<mx:Button id="button02" label="False" click="button02_clickHandler(event)" />
+		
+		<mx:Button id="button03" label="True" click="button03_clickHandler(event)" />
+		
+		<mx:Button id="button04" label="Integer" click="button04_clickHandler(event)" />
+		
+		<mx:Button id="button05" label="Double" click="button05_clickHandler(event)" />
+		
+		<mx:Button id="button06" label="String" click="button06_clickHandler(event)" />
+		
+		<mx:Button id="button07" label="XML Document" click="button07_clickHandler(event)" />
+		
+		<mx:Button id="button08" label="Date" click="button08_clickHandler(event)" />
+		
+		<mx:Button id="button09" label="Array" click="button09_clickHandler(event)" />
+		
+		<mx:Button id="button10" label="Object" click="button10_clickHandler(event)" />
+		
+		<mx:Button id="button11" label="XML" click="button11_clickHandler(event)" />
+		
+		<mx:Button id="button12" label="ByteArray" click="button12_clickHandler(event)" />
+			
+		<mx:Button label="Multiple Array Collections Test" click="button13_clickHandler(event)" />
+		
+	</mx:VBox>
+	
+</mx:Application>

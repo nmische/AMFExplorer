@@ -1,4 +1,6 @@
-FBL.ns(function() { with (FBL) { 
+function AMFExplorerAMFLib() {}
+
+(function() { with (FBL) { 
 	
 const NS_SEEK_SET = 0;
 const NS_SEEK_CUR = 1;
@@ -48,11 +50,72 @@ const AMF3_UINT29_MASK     = 0x1FFFFFFF; // 2^29 - 1
 const AMF3_INT28_MAX_VALUE = 0x0FFFFFFF; // 2^28 - 1
 const AMF3_INT28_MIN_VALUE = 0xF0000000; // -2^28 in 2^29 scheme
 
+/* 
+ * This is John Resig's Simple JavaScript Inheritance
+ * See: http://ejohn.org/blog/simple-javascript-inheritance/
+ */
+
+var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
+
+// The base Class implementation (does nothing)
+Class = function(){};
+
+// Create a new Class that inherits from this class
+Class.extend = function(prop) {
+	var _super = this.prototype;
+
+	// Instantiate a base class (but only create the instance,
+	// don't run the init constructor)
+    initializing = true;
+    var prototype = new this();
+    initializing = false;
+
+    // Copy the properties over onto the new prototype
+    for (var name in prop) {
+    // Check if we're overwriting an existing function
+    prototype[name] = typeof prop[name] == "function" &&
+    	typeof _super[name] == "function" && fnTest.test(prop[name]) ?
+    			(function(name, fn){
+    				return function() {
+    					var tmp = this._super;
+   
+    					// Add a new ._super() method that is the same method
+    					// but on the super-class
+    					this._super = _super[name];
+   
+    					// The method only need to be bound temporarily, so we
+    					// remove it when we're done executing
+    					var ret = fn.apply(this, arguments);       
+    					this._super = tmp;
+           
+    					return ret;
+    				};
+    			})(name, prop[name]) : prop[name];
+    }
+    // The dummy class constructor
+    function Class() {
+    	// All construction is actually done in the init method
+    	if ( !initializing && this.init )
+    		this.init.apply(this, arguments);
+    }
+
+    // Populate our constructed prototype object
+    Class.prototype = prototype;
+
+    // Enforce the constructor to be what we expect
+    Class.constructor = Class;
+
+    // And make this class extendable
+    Class.extend = arguments.callee;
+   
+    return Class;
+};	
+
 /**
  * @class JavaScript implementation of DataInputStream. 
  */	
-AMFExplorer.DataInputStream = Class.extend(
-/** @lends AMFExplorer.DataInputStream */	
+DataInputStream = Class.extend(
+/** @lends DataInputStream */	
 {
 	/**
      * @ignore
@@ -78,6 +141,10 @@ AMFExplorer.DataInputStream = Class.extend(
 		binaryStream.setInputStream(inputStream);
 			
 		this._stream = binaryStream;
+	},
+	
+	getInputStream: function() {
+		return this._stream;
 	},
 	
 	/**
@@ -225,7 +292,7 @@ AMFExplorer.DataInputStream = Class.extend(
 	 */
 	readLongUTF: function() {
 		var length = this.readLong();
-		return convertToUnicode(this._stream.readBytes(length));
+		return String(this._stream.readBytes(length));
 	},
 	
 	/**
@@ -252,9 +319,10 @@ AMFExplorer.DataInputStream = Class.extend(
 	/**
 	 * Reads in a string that has been encoded using a modified UTF-8 format with a 16-bit string length.
 	 */
-	readUTF: function() {
-		var length = this.readUnsignedShort();
-		return convertToUnicode(this._stream.readBytes(length));		
+	readUTF: function(length) {
+		if(!length)
+			var length = this.readUnsignedShort();
+		return String(this._stream.readBytes(length));		
 	},
 	
 	/**
@@ -286,8 +354,8 @@ AMFExplorer.DataInputStream = Class.extend(
 /**
  * @class A deserializer of AMF protocol data.
  */
-AMFExplorer.AbstractAmfInput = Class.extend(
-/** @lends AMFExplorer.AbstractAmfInput */		
+AbstractAmfInput = Class.extend(
+/** @lends this.AbstractAmfInput */		
 {
 	/**
      * @ignore
@@ -303,7 +371,7 @@ AMFExplorer.AbstractAmfInput = Class.extend(
 	},
 	
 	setInputStream: function(inputStream) {
-        this._in = new AMFExplorer.DataInputStream(inputStream);
+        this._in = new DataInputStream(inputStream);
     },
 
     stringToDocument: function(xml) {
@@ -311,7 +379,7 @@ AMFExplorer.AbstractAmfInput = Class.extend(
              return xml;
 
     	 return new XML(xml);
-    }
+    },
     
     available: function() {
         return this._in.available();
@@ -407,12 +475,11 @@ AMFExplorer.AbstractAmfInput = Class.extend(
 	
 });
 
-
 /**
  * @class An Amf0 input object.
  */
-AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
-/** @lends AMFExplorer.Amf0Input */		
+Amf0Input = AbstractAmfInput.extend(
+/** @lends this.Amf0Input */		
 {
 	/**
      * Unfortunately the Flash Player starts AMF 3 messages off with the legacy
@@ -470,7 +537,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
                 value = this.readDouble();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kNumberType", value);
+        			FBTrace.sysout("amf0Input.readObjectValue.kNumberType", value);
 
                 break;
 
@@ -478,7 +545,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
                 value = this.readBoolean();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kBooleanType", value);
+        			FBTrace.sysout("amf0Input.readObjectValue.kBooleanType", value);
 
                 break;
 
@@ -490,8 +557,8 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
 
                 if (this._avmPlusInput == null)
                 {
-                    this._avmPlusInput = new AMFExplorer.Amf3Input();
-                    this._avmPlusInput.setInputStream(this._in);
+                    this._avmPlusInput = new Amf3Input();
+                    this._avmPlusInput.setInputStream(this._in.getInputStream());
                 }
 
                 value = this._avmPlusInput.readObject();
@@ -503,19 +570,19 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
 
             case AMF0_kTypedObjectType:
                 var typeName = this._in.readUTF();
-                value = this.readObjectValue(typeName);
+                value = this.readScriptObject(typeName);
                 break;
 
             case AMF0_kLongStringType:
                 value = this.readLongUTF();
                 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kLongStringType", value);
+        			FBTrace.sysout("amf0Input.readObjectValue.kLongStringType", value);
                 
                 break;
 
             case AMF0_kObjectType:
-                value = this.readObjectValue(null);
+                value = this.readScriptObject(null);
                 break;
 
             case AMF0_kXMLObjectType:
@@ -525,7 +592,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             case AMF0_kNullType:
             	
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kNullType");
+        			FBTrace.sysout("amf0Input.readObjectValue.kNullType");
             	
                 break;
 
@@ -541,22 +608,22 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
                 var refNum = this._in.readUnsignedShort();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kReferenceType",refNum);
+        			FBTrace.sysout("amf0Input.readObjectValue.kReferenceType",refNum);
 
-                value = objectsTable[refNum];
+                value = this._objectsTable[refNum];
                 break;
 
             case AMF0_kUndefinedType:
                 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kUndefinedType");
+        			FBTrace.sysout("amf0Input.readObjectValue.kUndefinedType");
             	
                 break;
 
             case AMF0_kUnsupportedType:
 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kUnsupportedType");
+        			FBTrace.sysout("amf0Input.readObjectValue.kUnsupportedType");
 
                 //Unsupported type found in AMF stream.
                 var ex = new Error("Unsupported type found in AMF stream.","10302");
@@ -565,7 +632,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             case AMF0_kObjectEndType:
 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kObjectEndType");
+        			FBTrace.sysout("amf0Input.readObjectValue.kObjectEndType");
 
                 //Unexpected object end tag in AMF stream.
             	var ex1 = new Error("Unexpected object end tag in AMF stream.","10303");
@@ -574,7 +641,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             case AMF0_kRecordsetType:
 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.kRecordsetType");
+        			FBTrace.sysout("amf0Input.readObjectValue.kRecordsetType");
 
                 //AMF Recordsets are not supported.
                 var ex2 = new Error("AMF Recordsets are not supported.","10304");
@@ -583,7 +650,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             default:
 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.unknownType");
+        			FBTrace.sysout("amf0Input.readObjectValue.unknownType");
 
                 var ex3 = new Error("Unknown type: " + type + ".","10301");
                 throw ex3;
@@ -605,7 +672,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         var d = new Date(time);
     
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readDate",d);
+			FBTrace.sysout("amf0Input.readDate",d);
 
         return d;
     },
@@ -620,7 +687,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         rememberObject(h);
         
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readECMAArrayValue.startECMAArray",(objectsTable.length - 1));
+			FBTrace.sysout("amf0Input.readECMAArrayValue.startECMAArray",(objectsTable.length - 1));
 
         var name = this._in.readUTF();
         var type = this._in.readByte();
@@ -629,7 +696,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             if (type != AMF0_kObjectEndType)
             {
                 if (FBTrace.DBG_AMFINPUT)
-                	FBTrace.sysout("AMFExplorer.Amf0Input.readECMAArrayValue.namedElement",name);
+                	FBTrace.sysout("amf0Input.readECMAArrayValue.namedElement",name);
 
                 // Always read value but be careful to ignore erroneous 'length' prop that is sometimes sent by the player.
                 var value = this.readObjectValue(type);
@@ -642,7 +709,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         }
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readECMAArrayValue.endECMAArray");
+			FBTrace.sysout("amf0Input.readECMAArrayValue.endECMAArray");
 
         return h;
     },
@@ -651,7 +718,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         var s = this.readUTF();
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readString", s);
+			FBTrace.sysout("amf0Input.readString", s);
 
         return s;
     },
@@ -665,7 +732,7 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         this.rememberObject(l);
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readArrayValue.startAMFArray",(objectsTable.length - 1));
+			FBTrace.sysout("amf0Input.readArrayValue.startAMFArray",(this._objectsTable.length - 1));
 
         for (var i = 0; i < size; ++i)
         {
@@ -673,42 +740,43 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
             var type = this._in.readByte();
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf0Input.readArrayValue.arrayElement",i);
+    			FBTrace.sysout("amf0Input.readArrayValue.arrayElement" + type,i);
 
             // Add value to the array
             l.push(this.readObjectValue(type));
         }
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readArrayValue.endAMFArray");
+			FBTrace.sysout("amf0Input.readArrayValue.endAMFArray");
 
         return l;
     },
 
     /**
      * Deserialize the bits of a map w/o a prefixing type byte.
+     * Method named changed for AMF Explorer.
      */
-    readObjectValue: function(className) {
+    readScriptObject: function(className) {
         
         //proxy object not implemented.
     	
     	if (typeof(className) === "undefined" || className == null || className.length == 0 ) {
             object = {};
         } else {
-            object = {__className: className};
+            object = {_className: className};
         }
 
         var objectId = this.rememberObject(object);
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.startAMFObject" + (className ? "." + className : ""),(this._objectsTable.length - 1));
+			FBTrace.sysout("amf0Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectsTable.length - 1));
 
         var propertyName = this._in.readUTF();
         var type = this._in.readByte();
         while (type != AMF0_kObjectEndType)
         {
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.namedElement",propertyName);
+    			FBTrace.sysout("amf0Input.readScriptObject.namedElement",propertyName);
             
             var value = this.readObjectValue(type);
             
@@ -719,18 +787,18 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
         }
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readObjectValue.endAMFObject");
+			FBTrace.sysout("amf0Input.readScriptObject.endAMFObject");
        
         return object;
     },
     
-    // readLongUTF: implemented in AMFExplorer.AbstractAmfInput
+    // readLongUTF: implemented in this.AbstractAmfInput
     
     readXml: function() {
         var xml = this.readLongUTF();
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf0Input.readXml",xml);
+			FBTrace.sysout("amf0Input.readXml",xml);
 
         return this.stringToDocument(xml);
     },
@@ -739,8 +807,8 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
      * Remember a deserialized object so that you can use it later through a reference.
      */
     rememberObject: function(obj) {
-        var id = objectsTable.length;
-        objectsTable.push(obj);
+        var id = this._objectsTable.length;
+        this._objectsTable.push(obj);
         return id;
     }
 	
@@ -749,8 +817,8 @@ AMFExplorer.Amf0Input = AMFExplorer.AbstractAmfInput.extend(
 /**
  * @class An Amf3 input object.
  */
-AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
-/** @lends AMFExplorer.Amf3Input */		
+Amf3Input = AbstractAmfInput.extend(
+/** @lends this.Amf3Input */		
 {
 	
 	/**
@@ -836,7 +904,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = this.readString();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kStringType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kStringType", value);
                 
                 break;
 
@@ -852,7 +920,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = false;
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kFalseType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kFalseType", value);
                 
                 break;
 
@@ -860,7 +928,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = true;
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kTrueType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kTrueType", value);
                 
                 break;
 
@@ -871,7 +939,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = i;
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kIntegerType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kIntegerType", value);
                 
                 break;
 
@@ -879,21 +947,21 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = this._in.readDouble();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kDoubleType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kDoubleType", value);
                 
                 break;
 
             case AMF3_kUndefinedType:
                 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kUndefinedType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kUndefinedType", value);
             	
                 break;
 
             case AMF3_kNullType:
 
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kNullType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kNullType", value);
             	
                 break;
 
@@ -906,7 +974,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 value = this.readDate();
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.kDateType", value);
+        			FBTrace.sysout("amf3Input.readObjectValue.kDateType", value);
                 
                 break;
 
@@ -917,7 +985,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             default:
             	
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readObjectValue.unknownType");
+        			FBTrace.sysout("amf3Input.readObjectValue.unknownType");
 
                 var ex = new Error("Unknown type: " + type + ".","10301");
                 throw ex;
@@ -976,14 +1044,14 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             this._objectTable.push(d);
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf3Input.readDate",d);
+    			FBTrace.sysout("amf3Input.readDate",d);
 
             return d;
         }
     },
     
     readArray: function() {
-        var ref = readUInt29();
+        var ref = this.readUInt29();
 
         if ((ref & 1) == 0)
         {
@@ -1002,7 +1070,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             for (; ;)
             {
                 var name = this.readString();
-                if (name == null || name.length() == 0) break;
+                if (name == null || name.length == 0) break;
 
                 if (map == null)
                 {
@@ -1013,11 +1081,11 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                     this._objectTable.push(array);
           
                     if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("AMFExplorer.Amf3Input.readArray.startECMAArray",(objectTable.length - 1));
+            			FBTrace.sysout("amf3Input.readArray.startECMAArray",(objectTable.length - 1));
                 }
 
                 var value = this.readObject();
-                map.[name] = value;
+                map[name] = value;
             }
 
             // If we didn't find any string based keys, we have a
@@ -1032,12 +1100,12 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 this._objectTable.push(array);
 
                 if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readArray.startAMFArray",(objectTable.length - 1));
+        			FBTrace.sysout("amf3Input.readArray.startAMFArray",(this._objectTable.length - 1));
 
                 for (var i = 0; i < len; i++)
                 {
                 	if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("AMFExplorer.Amf3Input.readArray.arrayElement",i);
+            			FBTrace.sysout("amf3Input.readArray.arrayElement",i);
 
                     var item = this.readObject();
                     list.push(item);
@@ -1049,7 +1117,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                 for (var i = 0; i < len; i++)
                 {
                 	if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("AMFExplorer.Amf3Input.readArray.arrayElement",i);
+            			FBTrace.sysout("amf3Input.readArray.arrayElement",i);
 
                     var item = this.readObject();
                     map[String(i)] = item;
@@ -1057,7 +1125,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             }
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf3Input.readArray.endAMFArray",i);
+    			FBTrace.sysout("amf3Input.readArray.endAMFArray",i);
 
             return array;
         }
@@ -1081,22 +1149,21 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             if (className == null || className.length == 0) {
                 object = {};
             } else {
-            	object = {__className: className};
+            	object = {_className: className};
             }
 
             // Remember our instance in the object table
             var objectId = this._objectTable.length;
             this._objectTable.push(object);
 
-            if (/*externalizable*/ false)
+            if (externalizable)
             {
-                // eternalizable not implemented.
-            	// this.readExternalizable(className, object);
+                this.readExternalizable(className, object);
             }
             else
             {
             	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("AMFExplorer.Amf3Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectTable.length - 1));
+        			FBTrace.sysout("amf3Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectTable.length - 1));
 
                 var len = ti.getProperties().length;
 
@@ -1105,7 +1172,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                     var propName = ti.getProperty(i);
 
                     if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("AMFExplorer.Amf3Input.readScriptObject.namedElement",propName);
+            			FBTrace.sysout("amf3Input.readScriptObject.namedElement",propName);
 
                     var value = this.readObject();
                     object[propName] = value;
@@ -1118,7 +1185,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
                         if (name == null || name.length == 0) break;
 
                         if (FBTrace.DBG_AMFINPUT)
-                			FBTrace.sysout("AMFExplorer.Amf3Input.readScriptObject.namedElement",name);
+                			FBTrace.sysout("amf3Input.readScriptObject.namedElement",name);
 
                         var value = this.readObject();
                         object[name] = value;
@@ -1127,15 +1194,25 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             }
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf3Input.readScriptObject.endAMFObject");
+    			FBTrace.sysout("amf3Input.readScriptObject.endAMFObject");
 
             return object;
         }
     },
     
-    // readExternalizable: not implemented
+    readExternalizable: function(className, object) {
+        // this implementation is specific to AMF Explorer
+    	var obj = this.readObject();
+    	if (className.indexOf("ArrayCollection") != -1) {
+    		object.source = obj;
+    	} else {
+    		for (var i in obj) {
+    			object[i] = obj[i];
+    		}
+     	}
+    },
     
-    readByteArray: funciton() {
+    readByteArray: function() {
         var ref = this.readUInt29();
 
         if ((ref & 1) == 0)
@@ -1154,7 +1231,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             this._in.readFully(ba, 0, len);
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf3Input.readByteArray.startByteArray",(this._objectTable.length - 1));
+    			FBTrace.sysout("amf3Input.readByteArray.startByteArray",(this._objectTable.length - 1));
 
             return ba;
         }
@@ -1173,7 +1250,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             var count = (ref >> 4); /* uint29 */
             var className = this.readString();
 
-            ti = new AMFExplorer.TraitsInfo(className, dynamic, externalizable, count);
+            ti = new TraitsInfo(className, dynamic, externalizable, count);
 
             // Remember Trait Info
             this._traitsTable.push(ti);
@@ -1189,7 +1266,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
     },
     
     readUTF: function(utflen) {
-    	return convertToUnicode(this._in.readBytes(length));
+    	return this._in.readUTF(utflen);
     },
     
     /**
@@ -1265,7 +1342,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
             this._objectTable.push(xml);
 
             if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("AMFExplorer.Amf3Input.readXml",xml);
+    			FBTrace.sysout("amf3Input.readXml",xml);
         }
 
         return this.stringToDocument(xml);
@@ -1274,7 +1351,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
     getObjectReference: function(ref) {
     	
     	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf3Input.getObjectReference",ref);
+			FBTrace.sysout("amf3Input.getObjectReference",ref);
         
     	return this._objectTable[ref];
     },
@@ -1282,7 +1359,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
     getStringReference: function(ref) {
     	
     	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf3Input.getStringReference",ref);
+			FBTrace.sysout("amf3Input.getStringReference",ref);
         
     	return this._stringTable[ref];
     },
@@ -1290,7 +1367,7 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
     getTraitReference: function(ref) {
 
     	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.Amf3Input.getTraitReference",ref);
+			FBTrace.sysout("amf3Input.getTraitReference",ref);
         
     	return this._traitsTable[ref];
     }
@@ -1304,8 +1381,8 @@ AMFExplorer.Amf3Input = AMFExplorer.AbstractAmfInput.extend(
  * as it occurs in the stream.
  * @class TraitsInfo.
  */
-AMFExplorer.TraitsInfo = Class.extend(
-/** @lends AMFExplorer.TraitsInfo */
+TraitsInfo = Class.extend(
+/** @lends this.TraitsInfo */
 {
 	/**
      * @ignore
@@ -1489,10 +1566,10 @@ AMFExplorer.TraitsInfo = Class.extend(
 /**
  * This class can deserialize messages from an input stream
  * Multiple messages can be read from the same stream.
- * @class TraitsInfo.
+ * @class AmfMessageDeserializer.
  */
-AMFExplorer.AmfMessageDeserializer = Class.extend(
-/** @lends AMFExplorer.AmfMessageDeserializer */
+AmfMessageDeserializer = Class.extend(
+/** @lends this.AmfMessageDeserializer */
 {
 	/**
 	 * @ignore
@@ -1519,6 +1596,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
      */
     readMessage: function(messageIn) {
     	
+    	// TODO: implement ActionMesasge
     	// cheating a little here and not implementing full class for message.
     	if (!messageIn) {
     		var m = {};
@@ -1527,7 +1605,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
     	}
         
     	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.deserializingMessage");
+			FBTrace.sysout("amfMessageDeserializer.deserializingMessage");
 
         // Read packet header
         var version = this._amfIn.readUnsignedShort();
@@ -1546,17 +1624,18 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         m.version = version;
         
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.version",version);
+			FBTrace.sysout("amfMessageDeserializer.version",version);
 
         // Read headers        
         m.headers = [];        
         var headerCount = this._amfIn.readUnsignedShort();
         for (var i = 0; i < headerCount; ++i)
         {
+        	// TODO: implement MessageHeader
         	// cheating a little here and not implementing full class for header.
         	var header = {};
             m.headers.push(header);
-            readHeader(header, i);
+            this.readHeader(header, i);
         }
 
         // Read bodies
@@ -1564,10 +1643,11 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         var bodyCount = this._amfIn.readUnsignedShort();
         for (var i = 0; i < bodyCount; ++i)
         {
+        	// TODO: implement MessageBody
         	// cheating a little here and not implementing full class for body.
         	var body = {};
             m.bodies.push(body);
-            readBody(body, i);
+            this.readBody(body, i);
         }
         
         if (!messageIn)
@@ -1583,7 +1663,6 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
      * DATA kObject
      */
     readHeader: function(header, index) {
-    {
         
     	var name = this._amfIn.readUTF();
         header.name = name;
@@ -1596,7 +1675,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         var data;
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.readHeader.startHeader",header);
+			FBTrace.sysout("amfMessageDeserializer.readHeader.startHeader",header);
         
         // no error handling here
         data = this.readObject();
@@ -1604,7 +1683,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         header.data = data;
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.readHeader.endHeader");
+			FBTrace.sysout("amfMessageDeserializer.readHeader.endHeader");
         
     },
     
@@ -1623,7 +1702,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         var data;
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.readBody.startBody",body);
+			FBTrace.sysout("amfMessageDeserializer.readBody.startBody",body);
 
         // no error handling here
         data = this.readObject();
@@ -1631,7 +1710,7 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
         body.data = data;
 
         if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("AMFExplorer.AmfMessageDeserializer.readBody.endBody");
+			FBTrace.sysout("amfMessageDeserializer.readBody.endBody");
     },
 
     readObject: function() {
@@ -1640,62 +1719,6 @@ AMFExplorer.AmfMessageDeserializer = Class.extend(
     
 });
 
-(function(){
-var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
-
-// The base Class implementation (does nothing)
-this.Class = function(){};
-
-// Create a new Class that inherits from this class
-Class.extend = function(prop) {
-	var _super = this.prototype;
-
-	// Instantiate a base class (but only create the instance,
-	// don't run the init constructor)
-    initializing = true;
-    var prototype = new this();
-    initializing = false;
-
-    // Copy the properties over onto the new prototype
-    for (var name in prop) {
-    // Check if we're overwriting an existing function
-    prototype[name] = typeof prop[name] == "function" &&
-    	typeof _super[name] == "function" && fnTest.test(prop[name]) ?
-    			(function(name, fn){
-    				return function() {
-    					var tmp = this._super;
-   
-    					// Add a new ._super() method that is the same method
-    					// but on the super-class
-    					this._super = _super[name];
-   
-    					// The method only need to be bound temporarily, so we
-    					// remove it when we're done executing
-    					var ret = fn.apply(this, arguments);       
-    					this._super = tmp;
-           
-    					return ret;
-    				};
-    			})(name, prop[name]) : prop[name];
-    }
-    // The dummy class constructor
-    function Class() {
-    	// All construction is actually done in the init method
-    	if ( !initializing && this.init )
-    		this.init.apply(this, arguments);
-    }
-
-    // Populate our constructed prototype object
-    Class.prototype = prototype;
-
-    // Enforce the constructor to be what we expect
-    Class.constructor = Class;
-
-    // And make this class extendable
-    Class.extend = arguments.callee;
-   
-    return Class;
-};	
-})();
+this.AmfMessageDeserializer = AmfMessageDeserializer;
 	
-}});
+}}).apply(AMFExplorerAMFLib);
