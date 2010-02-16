@@ -17,16 +17,6 @@
 	
 	<script type="application/x-javascript" src="chrome://amfexplorer/content/captureDialog.js"/>
   
-  
-  	<!--
-  	<textbox id="amfExplorerCaptureMsg"
-  		class="plain" 
-  		style="background-color: transparent;" 
-  		flex="1" 
-  		multiline="true" 
-  		readonly="true" 
-  		overflow="this.height = this.inputField.scrollHeight;"
-  		value=""/>
-  	-->
   	<description id="amfExplorerCaptureMsg" style="white-space: pre;"></description>
+  	
 </dialog>
