@@ -1,10 +1,39 @@
 <?xml version="1.0"?>
 
+<!DOCTYPE window [
+<!ENTITY % amfExplorerDTD SYSTEM "chrome://amfexplorer/locale/amfExplorer.dtd">
+%amfExplorerDTD;
+]>
+
 <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"> 
+	<script src="chrome://amfexplorer/content/trace.js" type="application/x-javascript"/>
 	<script src="chrome://amfexplorer/content/amfLib.js" type="application/x-javascript"/>
     <script src="chrome://amfexplorer/content/amfExplorer.js" type="application/x-javascript"/>
 
     <stringbundleset id="stringbundleset">
         <stringbundle id="strings_amfExplorer" src="chrome://amfexplorer/locale/amfExplorer.properties"/>
     </stringbundleset>
+    
+    <!-- menu -->
+	<menupopup id="menu_ToolsPopup">
+		<menu id="menu_amfExplorer" 
+			label="&amfExplorer.AmfExplorer;" 
+			insertbefore="javascriptConsole">
+			<menupopup 
+				onpopupshowing="return Firebug.AMFExplorer.onMenuShowing(this);"
+				id="menu_amfExplorerPopUp">					
+				<menuitem id="amfExplorer_toggleCapture" 
+					label="&amfExplorer.CaptureResponses;"
+					type="checkbox"
+					oncommand="Firebug.AMFExplorer.openCaptureDialog()"
+					option="cache.mimeTypes"/>				
+				<menuseparator id="amfExplorer_aboutSeparator"/>
+				<menuitem id="amfExplorer_about" 
+					label="&amfExplorer.About;"
+					oncommand="Firebug.AMFExplorer.openAboutDialog()"/>        
+			</menupopup>
+		</menu>
+	</menupopup>
+	
+	
 </overlay>

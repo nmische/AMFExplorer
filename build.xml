@@ -52,29 +52,48 @@
 		<mkdir dir="${build.dir}" />
 	</target>
 	
-	<target name="build-chrome-jar" depends="set-up-build" description="create the xpi chrome contents including the chrome jar">
+	<target name="build-xpi-defaults" depends="set-up-build" description="create the xpi defaults contents">
+			<mkdir dir="${build.dir}/defaults" />		
+
+			<copy todir="${build.dir}/defaults">
+				<fileset dir="${src.dir}/defaults" />
+			</copy>		
+		</target>
+	
+	<target name="build-chrome-jar" depends="build-xpi-defaults" description="create the xpi chrome contents including the chrome jar">
 		<mkdir dir="${build.dir}" />
 		<mkdir dir="${build.dir}/jar" />
 		<mkdir dir="${build.dir}/chrome" />
 
 		<copy todir="${build.dir}/jar">
-			<fileset dir="${src.dir}/chrome" includes="content/**, locale/**, skin/**" excludes="${excludes}, **/*.gif"/>
+			<fileset dir="${src.dir}/chrome" includes="content/**, locale/**, skin/**" excludes="${excludes}, **/*.gif, **/trace.js"/>
 		</copy>
 		
 		<copy todir="${build.dir}/jar">
 			<fileset dir="${src.dir}/chrome" includes="**/*.gif" />
-		</copy>
-		
-		<!-- remove trace statements -->
-		<replaceregexp file="${build.dir}/jar/content/amfexplorer/amfExplorer.js"
-				match="\n\s*if\s*\(FBTrace[^;]+;" 
-				replace="" 
-				flags="g" />
-		 
+		</copy>		 
 		
 	</target>	
+	
+	<target name="remove-debugging" depends="build-chrome-jar">
+		<!-- remove trace statements -->
+		<replaceregexp match="\n\s*//\s*Debug[^;]+;" replace="" flags="g">
+			<fileset dir="${build.dir}/jar/content/amfexplorer" includes="**/*.js"/>
+		</replaceregexp>
 		
-	<target name="jar-chrome-jar" depends="build-chrome-jar">
+		<!-- remove trace include -->
+		<replace file="${build.dir}/jar/content/amfexplorer/amfExplorer.xul">
+			<replacetoken><![CDATA[<script src="chrome://amfexplorer/content/trace.js" type="application/x-javascript"/>]]></replacetoken>
+			<replacevalue></replacevalue>
+		</replace>
+		
+		<!-- remove trace prefs -->
+		<replaceregexp file="${build.dir}/defaults/preferences/prefs.js" match=".*DBG\_.*\n" replace="" flags="g" />
+					
+		
+	</target>
+		
+	<target name="jar-chrome-jar" depends="remove-debugging">
 				
 		<zip destfile="${build.dir}/chrome/${name}.jar" 
 			update="true"
@@ -85,15 +104,9 @@
 		
 	</target>
 	
-	<target name="build-xpi-defaults" depends="jar-chrome-jar" description="create the xpi defaults contents">
-		<mkdir dir="${build.dir}/defaults" />		
+		
 
-		<copy todir="${build.dir}/defaults">
-			<fileset dir="${src.dir}/defaults" />
-		</copy>		
-	</target>	
-
-	<target name="build-xpi" depends="build-xpi-defaults" description="create root xpi contents">
+	<target name="build-xpi" depends="jar-chrome-jar" description="create root xpi contents">
 		
 		<copy file="${src.dir}/install.rdf" toDir="${build.dir}" />
 		<copy file="${src.dir}/chrome.manifest" toDir="${build.dir}" />

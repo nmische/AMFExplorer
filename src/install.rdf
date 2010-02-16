@@ -5,7 +5,7 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>amfexplorer@riaforge.org</em:id>
-    <em:version>0.1</em:version>
+    <em:version>0.2</em:version>
    
     <!-- Firefox -->
     <em:targetApplication>
@@ -17,7 +17,7 @@
     </em:targetApplication>
 
     <em:name>AMF Explorer</em:name>
-    <em:description>Allows viewing of AMF data in Firebug Net panel.</em:description>
+    <em:description>AMF Viewing for Firebug.</em:description>
     <em:creator>Nathan Mische</em:creator>
     <em:homepageURL>http://amfexplorer.riaforge.org</em:homepageURL>
   </Description>      

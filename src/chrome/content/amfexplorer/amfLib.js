@@ -536,16 +536,18 @@ Amf0Input = AbstractAmfInput.extend(
             case AMF0_kNumberType:
                 value = this.readDouble();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kNumberType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kNumberType", value);
 
                 break;
 
             case AMF0_kBooleanType:
                 value = this.readBoolean();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kBooleanType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kBooleanType", value);
 
                 break;
 
@@ -576,8 +578,9 @@ Amf0Input = AbstractAmfInput.extend(
             case AMF0_kLongStringType:
                 value = this.readLongUTF();
                 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kLongStringType", value);
+                // Debug                
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kLongStringType", value);
                 
                 break;
 
@@ -591,8 +594,9 @@ Amf0Input = AbstractAmfInput.extend(
 
             case AMF0_kNullType:
             	
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kNullType");
+            	// Debug            	
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kNullType");
             	
                 break;
 
@@ -607,23 +611,26 @@ Amf0Input = AbstractAmfInput.extend(
             case AMF0_kReferenceType:
                 var refNum = this._in.readUnsignedShort();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kReferenceType",refNum);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kReferenceType",refNum);
 
                 value = this._objectsTable[refNum];
                 break;
 
             case AMF0_kUndefinedType:
                 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kUndefinedType");
+            	// Debug                
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kUndefinedType");
             	
                 break;
 
             case AMF0_kUnsupportedType:
 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kUnsupportedType");
+            	// Debug
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kUnsupportedType");
 
                 //Unsupported type found in AMF stream.
                 var ex = new Error("Unsupported type found in AMF stream.","10302");
@@ -631,8 +638,9 @@ Amf0Input = AbstractAmfInput.extend(
 
             case AMF0_kObjectEndType:
 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kObjectEndType");
+            	// Debug
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kObjectEndType");
 
                 //Unexpected object end tag in AMF stream.
             	var ex1 = new Error("Unexpected object end tag in AMF stream.","10303");
@@ -640,8 +648,9 @@ Amf0Input = AbstractAmfInput.extend(
 
             case AMF0_kRecordsetType:
 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.kRecordsetType");
+            	// Debug
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.kRecordsetType");
 
                 //AMF Recordsets are not supported.
                 var ex2 = new Error("AMF Recordsets are not supported.","10304");
@@ -649,8 +658,9 @@ Amf0Input = AbstractAmfInput.extend(
 
             default:
 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf0Input.readObjectValue.unknownType");
+            	// Debug
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf0Input.readObjectValue.unknownType");
 
                 var ex3 = new Error("Unknown type: " + type + ".","10301");
                 throw ex3;
@@ -671,8 +681,9 @@ Amf0Input = AbstractAmfInput.extend(
 
         var d = new Date(time);
     
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readDate",d);
+        // Debug    
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readDate",d);
 
         return d;
     },
@@ -686,8 +697,9 @@ Amf0Input = AbstractAmfInput.extend(
         
         rememberObject(h);
         
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readECMAArrayValue.startECMAArray",(objectsTable.length - 1));
+        // Debug        
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readECMAArrayValue.startECMAArray",(objectsTable.length - 1));
 
         var name = this._in.readUTF();
         var type = this._in.readByte();
@@ -695,8 +707,9 @@ Amf0Input = AbstractAmfInput.extend(
         {
             if (type != AMF0_kObjectEndType)
             {
-                if (FBTrace.DBG_AMFINPUT)
-                	FBTrace.sysout("amf0Input.readECMAArrayValue.namedElement",name);
+                // Debug                
+            	if (AMFXTrace.DBG_AMFINPUT)
+                	AMFXTrace.sysout("amf0Input.readECMAArrayValue.namedElement",name);
 
                 // Always read value but be careful to ignore erroneous 'length' prop that is sometimes sent by the player.
                 var value = this.readObjectValue(type);
@@ -708,8 +721,9 @@ Amf0Input = AbstractAmfInput.extend(
             type = this._in.readByte();
         }
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readECMAArrayValue.endECMAArray");
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readECMAArrayValue.endECMAArray");
 
         return h;
     },
@@ -717,8 +731,9 @@ Amf0Input = AbstractAmfInput.extend(
     readString: function() {
         var s = this.readUTF();
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readString", s);
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readString", s);
 
         return s;
     },
@@ -731,23 +746,26 @@ Amf0Input = AbstractAmfInput.extend(
         var l = [];
         this.rememberObject(l);
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readArrayValue.startAMFArray",(this._objectsTable.length - 1));
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readArrayValue.startAMFArray",(this._objectsTable.length - 1));
 
         for (var i = 0; i < size; ++i)
         {
             // Get element type
             var type = this._in.readByte();
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf0Input.readArrayValue.arrayElement" + type,i);
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf0Input.readArrayValue.arrayElement",i);
 
             // Add value to the array
             l.push(this.readObjectValue(type));
         }
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readArrayValue.endAMFArray");
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readArrayValue.endAMFArray");
 
         return l;
     },
@@ -768,15 +786,17 @@ Amf0Input = AbstractAmfInput.extend(
 
         var objectId = this.rememberObject(object);
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectsTable.length - 1));
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectsTable.length - 1));
 
         var propertyName = this._in.readUTF();
         var type = this._in.readByte();
         while (type != AMF0_kObjectEndType)
         {
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf0Input.readScriptObject.namedElement",propertyName);
+            // Debug            
+        	if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf0Input.readScriptObject.namedElement",propertyName);
             
             var value = this.readObjectValue(type);
             
@@ -786,8 +806,9 @@ Amf0Input = AbstractAmfInput.extend(
             type = this._in.readByte();
         }
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readScriptObject.endAMFObject");
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readScriptObject.endAMFObject");
        
         return object;
     },
@@ -797,8 +818,9 @@ Amf0Input = AbstractAmfInput.extend(
     readXml: function() {
         var xml = this.readLongUTF();
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf0Input.readXml",xml);
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf0Input.readXml",xml);
 
         return this.stringToDocument(xml);
     },
@@ -903,8 +925,9 @@ Amf3Input = AbstractAmfInput.extend(
             case AMF3_kStringType:
                 value = this.readString();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kStringType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kStringType", value);
                 
                 break;
 
@@ -919,16 +942,18 @@ Amf3Input = AbstractAmfInput.extend(
             case AMF3_kFalseType:
                 value = false;
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kFalseType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kFalseType", value);
                 
                 break;
 
             case AMF3_kTrueType:
                 value = true;
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kTrueType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kTrueType", value);
                 
                 break;
 
@@ -938,30 +963,34 @@ Amf3Input = AbstractAmfInput.extend(
                 i = (i << 3) >> 3;
                 value = i;
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kIntegerType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kIntegerType", value);
                 
                 break;
 
             case AMF3_kDoubleType:
                 value = this._in.readDouble();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kDoubleType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kDoubleType", value);
                 
                 break;
 
             case AMF3_kUndefinedType:
                 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kUndefinedType", value);
+            	// Debug                
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kUndefinedType", value);
             	
                 break;
 
             case AMF3_kNullType:
 
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kNullType", value);
+            	// Debug
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kNullType", value);
             	
                 break;
 
@@ -973,8 +1002,9 @@ Amf3Input = AbstractAmfInput.extend(
             case AMF3_kDateType:
                 value = this.readDate();
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.kDateType", value);
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.kDateType", value);
                 
                 break;
 
@@ -984,8 +1014,9 @@ Amf3Input = AbstractAmfInput.extend(
                 
             default:
             	
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readObjectValue.unknownType");
+            	// Debug            	
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readObjectValue.unknownType");
 
                 var ex = new Error("Unknown type: " + type + ".","10301");
                 throw ex;
@@ -1043,8 +1074,9 @@ Amf3Input = AbstractAmfInput.extend(
             //Remember Date
             this._objectTable.push(d);
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf3Input.readDate",d);
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readDate",d);
 
             return d;
         }
@@ -1080,8 +1112,9 @@ Amf3Input = AbstractAmfInput.extend(
                     //Remember Object
                     this._objectTable.push(array);
           
-                    if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("amf3Input.readArray.startECMAArray",(objectTable.length - 1));
+                    // Debug          
+                    if (AMFXTrace.DBG_AMFINPUT)
+            			AMFXTrace.sysout("amf3Input.readArray.startECMAArray",(objectTable.length - 1));
                 }
 
                 var value = this.readObject();
@@ -1099,13 +1132,15 @@ Amf3Input = AbstractAmfInput.extend(
                 // Remember List
                 this._objectTable.push(array);
 
-                if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readArray.startAMFArray",(this._objectTable.length - 1));
+                // Debug
+                if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readArray.startAMFArray",(this._objectTable.length - 1));
 
                 for (var i = 0; i < len; i++)
                 {
-                	if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("amf3Input.readArray.arrayElement",i);
+                	// Debug                	
+                	if (AMFXTrace.DBG_AMFINPUT)
+            			AMFXTrace.sysout("amf3Input.readArray.arrayElement",i);
 
                     var item = this.readObject();
                     list.push(item);
@@ -1116,16 +1151,18 @@ Amf3Input = AbstractAmfInput.extend(
             {
                 for (var i = 0; i < len; i++)
                 {
-                	if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("amf3Input.readArray.arrayElement",i);
+                	// Debug                	
+                	if (AMFXTrace.DBG_AMFINPUT)
+            			AMFXTrace.sysout("amf3Input.readArray.arrayElement",i);
 
                     var item = this.readObject();
                     map[String(i)] = item;
                 }
             }
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf3Input.readArray.endAMFArray",i);
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readArray.endAMFArray",i);
 
             return array;
         }
@@ -1162,8 +1199,9 @@ Amf3Input = AbstractAmfInput.extend(
             }
             else
             {
-            	if (FBTrace.DBG_AMFINPUT)
-        			FBTrace.sysout("amf3Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectTable.length - 1));
+            	// Debug            	
+            	if (AMFXTrace.DBG_AMFINPUT)
+        			AMFXTrace.sysout("amf3Input.readScriptObject.startAMFObject" + (className ? "." + className : ""),(this._objectTable.length - 1));
 
                 var len = ti.getProperties().length;
 
@@ -1171,8 +1209,9 @@ Amf3Input = AbstractAmfInput.extend(
                 {
                     var propName = ti.getProperty(i);
 
-                    if (FBTrace.DBG_AMFINPUT)
-            			FBTrace.sysout("amf3Input.readScriptObject.namedElement",propName);
+                    // Debug
+                    if (AMFXTrace.DBG_AMFINPUT)
+            			AMFXTrace.sysout("amf3Input.readScriptObject.namedElement",propName);
 
                     var value = this.readObject();
                     object[propName] = value;
@@ -1184,8 +1223,9 @@ Amf3Input = AbstractAmfInput.extend(
                         var name = this.readString();
                         if (name == null || name.length == 0) break;
 
-                        if (FBTrace.DBG_AMFINPUT)
-                			FBTrace.sysout("amf3Input.readScriptObject.namedElement",name);
+                        // Debug
+                        if (AMFXTrace.DBG_AMFINPUT)
+                			AMFXTrace.sysout("amf3Input.readScriptObject.namedElement",name);
 
                         var value = this.readObject();
                         object[name] = value;
@@ -1193,8 +1233,9 @@ Amf3Input = AbstractAmfInput.extend(
                 }
             }
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf3Input.readScriptObject.endAMFObject");
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readScriptObject.endAMFObject");
 
             return object;
         }
@@ -1230,8 +1271,9 @@ Amf3Input = AbstractAmfInput.extend(
 
             this._in.readFully(ba, 0, len);
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf3Input.readByteArray.startByteArray",(this._objectTable.length - 1));
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readByteArray.startByteArray",(this._objectTable.length - 1));
 
             return ba;
         }
@@ -1341,8 +1383,9 @@ Amf3Input = AbstractAmfInput.extend(
             //Remember Object
             this._objectTable.push(xml);
 
-            if (FBTrace.DBG_AMFINPUT)
-    			FBTrace.sysout("amf3Input.readXml",xml);
+            // Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readXml",xml);
         }
 
         return this.stringToDocument(xml);
@@ -1350,24 +1393,27 @@ Amf3Input = AbstractAmfInput.extend(
     
     getObjectReference: function(ref) {
     	
-    	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf3Input.getObjectReference",ref);
+    	// Debug    	
+    	if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf3Input.getObjectReference",ref);
         
     	return this._objectTable[ref];
     },
 
     getStringReference: function(ref) {
     	
-    	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf3Input.getStringReference",ref);
+    	// Debug    	
+    	if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf3Input.getStringReference",ref);
         
     	return this._stringTable[ref];
     },
 
     getTraitReference: function(ref) {
 
-    	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amf3Input.getTraitReference",ref);
+    	// Debug
+    	if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf3Input.getTraitReference",ref);
         
     	return this._traitsTable[ref];
     }
@@ -1604,8 +1650,9 @@ AmfMessageDeserializer = Class.extend(
     		var m = messageIn;
     	}
         
-    	if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.deserializingMessage");
+    	// Debug        
+    	if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.deserializingMessage");
 
         // Read packet header
         var version = this._amfIn.readUnsignedShort();
@@ -1623,8 +1670,9 @@ AmfMessageDeserializer = Class.extend(
 
         m.version = version;
         
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.version",version);
+        // Debug        
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.version",version);
 
         // Read headers        
         m.headers = [];        
@@ -1674,16 +1722,18 @@ AmfMessageDeserializer = Class.extend(
         this._amfIn.reset();
         var data;
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.readHeader.startHeader",header);
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.readHeader.startHeader",header);
         
         // no error handling here
         data = this.readObject();
         
         header.data = data;
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.readHeader.endHeader");
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.readHeader.endHeader");
         
     },
     
@@ -1701,16 +1751,18 @@ AmfMessageDeserializer = Class.extend(
         this._amfIn.reset();
         var data;
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.readBody.startBody",body);
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.readBody.startBody",body);
 
         // no error handling here
         data = this.readObject();
         
         body.data = data;
 
-        if (FBTrace.DBG_AMFINPUT)
-			FBTrace.sysout("amfMessageDeserializer.readBody.endBody");
+        // Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amfMessageDeserializer.readBody.endBody");
     },
 
     readObject: function() {

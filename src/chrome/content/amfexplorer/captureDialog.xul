@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % amfExplorerDTD SYSTEM "chrome://amfexplorer/locale/amfExplorer.dtd">
+%amfExplorerDTD;
+]>
+
+<dialog id="amfExplorerCaptureDialog" 
+	title="&amfExplorer.CaptureDialogTitle;"
+	buttons="accept,cancel"
+	onload="AMFExplorerConfDialog.initialize(this);"
+	buttonlabelcancel="Cancel"
+	buttonlabelaccept="Restart Firefox"
+	ondialogaccept="return AMFExplorerConfDialog.onRestartFirefox()"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	
+	<script type="application/x-javascript" src="chrome://amfexplorer/content/captureDialog.js"/>
+  
+  
+  	<!--
+  	<textbox id="amfExplorerCaptureMsg"
+  		class="plain" 
+  		style="background-color: transparent;" 
+  		flex="1" 
+  		multiline="true" 
+  		readonly="true" 
+  		overflow="this.height = this.inputField.scrollHeight;"
+  		value=""/>
+  	-->
+  	<description id="amfExplorerCaptureMsg" style="white-space: pre;"></description>
+</dialog>

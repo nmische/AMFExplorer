@@ -10,6 +10,9 @@ const NS_SEEK_SET = Ci.nsISeekableStream.NS_SEEK_SET;
 const NS_SEEK_CUR = Ci.nsISeekableStream.NS_SEEK_CUR;
 const NS_SEEK_END = Ci.nsISeekableStream.NS_SEEK_END;
 
+const FB_CACHE_PREF = "cache.mimeTypes";
+const AMF_MIME = "application/x-amf";
+
 //	List of AMF content types.
 var contentTypes =
 {
@@ -18,6 +21,68 @@ var contentTypes =
 
 // The AMF parsing library.
 var AMFLib = AMFExplorerAMFLib;
+
+//	************************************************************************************************
+//	Main extension implementation
+
+Firebug.AMFExplorer = extend(Firebug.Module,
+{
+	
+	initialize: function() 
+	{
+		Firebug.Module.initialize.apply(this, arguments);
+		
+		// Debug : Open new FB Tracing Console window for "extensions.amfexplorer" domain.
+		Firebug.TraceModule.openConsole("extensions.amfexplorer");
+	},
+
+	shutdown: function()
+	{
+		Firebug.Module.shutdown.apply(this, arguments);
+	},
+	
+	openAboutDialog: function()
+	{
+	    var extensionManager = CCSV("@mozilla.org/extensions/manager;1", "nsIExtensionManager");
+	    openDialog("chrome://mozapps/content/extensions/about.xul", "",
+	        "chrome,centerscreen,modal", "urn:mozilla:item:amfexplorer@riaforge.org", extensionManager.datasource);
+	},
+	
+	onMenuShowing: function(popup)
+    {
+        for (var child = popup.firstChild; child; child = child.nextSibling)
+        {
+            if (child.localName == "menuitem")
+            {
+                var option = child.getAttribute("option");
+                if (option)
+                {
+                    var checked = false;
+                    if (option == "cache.mimeTypes")                    	
+                        checked = this.responseCaptureEnabled();
+
+                    child.setAttribute("checked", checked);
+                }
+            }
+        }
+    },
+    
+    responseCaptureEnabled: function() {
+    	var mimeTypes = Firebug.getPref(Firebug.prefDomain, FB_CACHE_PREF);
+    	if (mimeTypes.indexOf(AMF_MIME) != -1)
+    		return true;
+    	
+    	return false;
+    },
+    
+    openCaptureDialog: function(){
+    	openDialog("chrome://amfexplorer/content/captureDialog.xul"
+    			,"AMFExplorerCaptureWin"
+    			,"dialog"
+    			,{FBL:FBL,Firebug:Firebug}); 
+    }
+    	
+});
 
 //	************************************************************************************************
 //	Model implementation
@@ -30,6 +95,9 @@ Firebug.AMFViewerModel = {};
 Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 {
 	dispatchName: "amfRequestViewer",
+	
+	amfDeserializer: null,
+	
 	initialize: function() 
 	{
 		Firebug.Module.initialize.apply(this, arguments);
@@ -48,18 +116,21 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 	initTabBody: function(infoBox, file)
 	{
 
-		if (FBTrace.DBG_AMFREQUEST)
-			FBTrace.sysout("amfRequestViewer.initTabBody.infoBox", infoBox);
+		// Debug
+		if (AMFXTrace.DBG_AMFREQUEST)
+			AMFXTrace.sysout("amfRequestViewer.initTabBody.infoBox", infoBox);
 
-		if (FBTrace.DBG_AMFREQUEST)
-			FBTrace.sysout("amfRequestViewer.initTabBody.file", file);		
+		// Debug
+		if (AMFXTrace.DBG_AMFREQUEST)
+			AMFXTrace.sysout("amfRequestViewer.initTabBody.file", file);		
 		
 		// The AMF request object is not there, check to see if it is an AMF request.
 		if (!file.requestAMF && AMFUtils.isAmfRequest(file.request)) {			
 			var postHeaders = this.parsePostHeaders(file);
 			
-			if (FBTrace.DBG_AMFREQUEST)
-				FBTrace.sysout("amfRequestViewer.initTabBody.postHeaders",postHeaders);
+			// Debug			
+			if (AMFXTrace.DBG_AMFREQUEST)
+				AMFXTrace.sysout("amfRequestViewer.initTabBody.postHeaders",postHeaders);
 									
 			file.requestAMF = this.parseAMF(file.request,postHeaders['content-length'])
 			
@@ -69,8 +140,9 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 			Firebug.NetMonitor.NetInfoBody.appendTab(infoBox, "RequestAMF",
 		            $STR("amfexplorer.tab.amfRequest","strings_amfExplorer"));
 			
-			if (FBTrace.DBG_AMFREQUEST)
-	            FBTrace.sysout("amfRequestViewer.initTabBody: AMF object available " +
+			// Debug			
+			if (AMFXTrace.DBG_AMFREQUEST)
+	            AMFXTrace.sysout("amfRequestViewer.initTabBody: AMF object available " +
 	                (typeof(file.requestAMF) != "undefined"), file.requestAMF);
 		}
 		
@@ -95,8 +167,9 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 	parseAMF: function(request, length)
 	{
 		
-		if (FBTrace.DBG_AMFREQUEST)
-			FBTrace.sysout("amfRequestViewer.parseAMF");
+		// Debug		
+		if (AMFXTrace.DBG_AMFREQUEST)
+			AMFXTrace.sysout("amfRequestViewer.parseAMF");
 		
 		try {
 			var offset = parseInt(length) * -1;
@@ -106,18 +179,25 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 				var ss = is.QueryInterface(Ci.nsISeekableStream);
 				if (ss)  {
 					prevOffset = ss.tell();
-					ss.seek(NS_SEEK_END, offset);								
-					var amfDeserializer = new AMFLib.AmfMessageDeserializer();
-					amfDeserializer.initialize(ss);
-					var obj = amfDeserializer.readMessage();								
+					ss.seek(NS_SEEK_END, offset);
+					
+					if (!this.amfDeserializer) {						
+						// Debug		
+						if (AMFXTrace.DBG_AMFREQUEST)
+							AMFXTrace.sysout("amfRequestViewer.createDeserializer");						
+						this.amfDeserializer = new AMFLib.AmfMessageDeserializer();						
+					}
+					this.amfDeserializer.initialize(ss);
+					var obj = this.amfDeserializer.readMessage();								
 					return obj;													
 					if (prevOffest == 0)
 						ss.seek(NS_SEEK_SET, 0);
 				}
 			}
 		} catch (e) {
-			if (FBTrace.DBG_AMFREQUEST)
-				FBTrace.sysout("amfRequestViewer.parseAMF.error",e);
+			// Debug			
+			if (AMFXTrace.DBG_AMFREQUEST)
+				AMFXTrace.sysout("amfRequestViewer.parseAMF.error",e);
 		}
 		return null;
 	},
@@ -125,8 +205,9 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 	parsePostHeaders: function(file)
 	{
 
-		if (FBTrace.DBG_AMFREQUEST)
-			FBTrace.sysout("amfRequestViewer.parsePostHeaders");
+		// Debug
+		if (AMFXTrace.DBG_AMFREQUEST)
+			AMFXTrace.sysout("amfRequestViewer.parsePostHeaders");
 
 		var text = file.postText;
 		if (text == undefined)
@@ -160,6 +241,9 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 {
 	dispatchName: "amfResponseViewer",
+	
+	amfDeserializer: null,
+	
 	initialize: function() 
 	{
 		Firebug.Module.initialize.apply(this, arguments);
@@ -178,11 +262,13 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 	initTabBody: function(infoBox, file)
 	{
 
-		if (FBTrace.DBG_AMFRESPONSE)
-			FBTrace.sysout("amfResponseViewer.initTabBody.infoBox", infoBox);
+		// Debug
+		if (AMFXTrace.DBG_AMFRESPONSE)
+			AMFXTrace.sysout("amfResponseViewer.initTabBody.infoBox", infoBox);
 
-		if (FBTrace.DBG_AMFRESPONSE)
-			FBTrace.sysout("amfResponseViewer.initTabBody.file", file);		
+		// Debug
+		if (AMFXTrace.DBG_AMFRESPONSE)
+			AMFXTrace.sysout("amfResponseViewer.initTabBody.file", file);		
 		
 		// The AMF request object is not there, check to see if it is an AMF request.
 		if (!file.responseAMF && AMFUtils.isAmfRequest(file.request)) {			
@@ -193,8 +279,9 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 			Firebug.NetMonitor.NetInfoBody.appendTab(infoBox, "ResponseAMF",
 		            $STR("amfexplorer.tab.amfResponse","strings_amfExplorer"));
 			
-			if (FBTrace.DBG_AMFRESPONSE)
-	            FBTrace.sysout("amfResponseViewer.initTabBody: AMF object available " +
+			// Debug			
+			if (AMFXTrace.DBG_AMFRESPONSE)
+	            AMFXTrace.sysout("amfResponseViewer.initTabBody: AMF object available " +
 	                (typeof(file.requestAMF) != "undefined"), file.responseAMF);
 		}
 		
@@ -219,8 +306,12 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 	parseAMF: function(file)
 	{
 		
-		if (FBTrace.DBG_AMFRESPONSE)
-			FBTrace.sysout("amfResponseViewer.parseAMF");
+		if (!file.responseText)
+			return null;
+		
+		// Debug		
+		if (AMFXTrace.DBG_AMFRESPONSE)
+			AMFXTrace.sysout("amfResponseViewer.parseAMF");
 		
 		try {
 			var is = getInputStreamFromString(file.responseText);
@@ -229,18 +320,24 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 				var ss = is.QueryInterface(Ci.nsISeekableStream);
 				if (ss)  {
 					prevOffset = ss.tell();
-					ss.seek(NS_SEEK_SET, 0);					
-					var amfDeserializer = new AMFLib.AmfMessageDeserializer();
-					amfDeserializer.initialize(ss);
-					var obj = amfDeserializer.readMessage();								
+					ss.seek(NS_SEEK_SET, 0);
+					if (!this.mfDeserializer) {						
+						// Debug		
+						if (AMFXTrace.DBG_AMFRESPONSE)
+							AMFXTrace.sysout("amfResponseViewer.createDeserializer");						
+						this.amfDeserializer = new AMFLib.AmfMessageDeserializer();						
+					}
+					this.amfDeserializer.initialize(ss);
+					var obj = this.amfDeserializer.readMessage();								
 					return obj;					
 					if (prevOffest == 0)
 						ss.seek(NS_SEEK_SET, 0);
 				}
 			}
 		} catch (e) {
-			if (FBTrace.DBG_AMFRESPONSE)
-				FBTrace.sysout("amfResponseViewer.parseAMF.error",e);
+			// Debug			
+			if (AMFXTrace.DBG_AMFRESPONSE)
+				AMFXTrace.sysout("amfResponseViewer.parseAMF.error",e);
 		}
 		return null;
 	}
@@ -270,6 +367,7 @@ var AMFUtils = Firebug.AMFViewerModel.Utils;
 //	************************************************************************************************
 //	Registration
 
+Firebug.registerModule(Firebug.AMFExplorer);
 Firebug.registerModule(Firebug.AMFViewerModel.AMFRequest);
 Firebug.registerModule(Firebug.AMFViewerModel.AMFResponse);
 
