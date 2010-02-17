@@ -24,7 +24,7 @@ const AMF0_kECMAArrayType     = 8;
 const AMF0_kObjectEndType     = 9;
 const AMF0_kStrictArrayType   = 10;
 const AMF0_kDateType          = 11;
-const AMF0_kLongStringType    = 12;
+const AMF0_kLongStringType    = 12; 
 const AMF0_kUnsupportedType   = 13;
 const AMF0_kRecordsetType     = 14;
 const AMF0_kXMLObjectType     = 15;
@@ -49,6 +49,30 @@ const AMF3_EMPTY_STRING    = "";
 const AMF3_UINT29_MASK     = 0x1FFFFFFF; // 2^29 - 1
 const AMF3_INT28_MAX_VALUE = 0x0FFFFFFF; // 2^28 - 1
 const AMF3_INT28_MIN_VALUE = 0xF0000000; // -2^28 in 2^29 scheme
+
+// AbstractMessage Constants
+const HAS_NEXT_FLAG = 128;
+const BODY_FLAG = 1;
+const CLIENT_ID_FLAG = 2;
+const DESTINATION_FLAG = 4;
+const HEADERS_FLAG = 8;
+const MESSAGE_ID_FLAG = 16;
+const TIMESTAMP_FLAG = 32;
+const TIME_TO_LIVE_FLAG = 64;
+const CLIENT_ID_BYTES_FLAG = 1;
+const MESSAGE_ID_BYTES_FLAG = 2;
+
+//AsyncMessage Constants
+const CORRELATION_ID_FLAG = 1;
+const CORRELATION_ID_BYTES_FLAG = 2;
+
+// Simplified implementaiton of the class alias registry 
+var classAliasRegistry =
+{	
+	"DSK": "flex.messaging.messages.AcknowledgeMessageExt",
+	"DSA": "flex.messaging.messages.AsyncMessageExt",
+	"DSC": "flex.messaging.messages.CommandMessageExt"	
+};
 
 /* 
  * This is John Resig's Simple JavaScript Inheritance
@@ -1182,6 +1206,11 @@ Amf3Input = AbstractAmfInput.extend(
             externalizable = ti.isExternalizable();
             var object;
             // proxy not implemented
+            
+            // Check for any registered class aliases 
+            var aliasedClass = classAliasRegistry[className];
+            if (aliasedClass != null)
+            	className = aliasedClass;
 
             if (className == null || className.length == 0) {
                 object = {};
@@ -1241,14 +1270,45 @@ Amf3Input = AbstractAmfInput.extend(
         }
     },
     
+    /**
+     * This implementation is specific to AMF Explorer
+     */
     readExternalizable: function(className, object) {
-        // this implementation is specific to AMF Explorer
-    	var obj = this.readObject();
+         	
+    	// Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf3Input.readExternalizable.className",{className:className});    	
+    	
+    	var classParts = className.split(".");
+    	var unqualifiedClassName = classParts[(classParts.length - 1)];
+    	
+    	// Debug
+        if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("amf3Input.readExternalizable.unqualifiedClassName",{unqualifiedClassName:unqualifiedClassName});
+    	
+    	if (unqualifiedClassName && messages[unqualifiedClassName]) {
+    		var obj = new messages[unqualifiedClassName]();
+    		obj.readExternal(this);
+    		
+    		// Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readExternalizable.messageObject",obj);
+            
+    	} else {
+    		var obj = this.readObject();
+    		
+    		// Debug
+            if (AMFXTrace.DBG_AMFINPUT)
+    			AMFXTrace.sysout("amf3Input.readExternalizable.genericObject",obj);
+    	}
+    	
+    	
     	if (className.indexOf("ArrayCollection") != -1) {
     		object.source = obj;
     	} else {
     		for (var i in obj) {
-    			object[i] = obj[i];
+    			if (typeof(obj[i]) != "function" && i != "_super")
+    				object[i] = obj[i];
     		}
      	}
     },
@@ -1608,6 +1668,176 @@ TraitsInfo = Class.extend(
     }
 	
 });
+
+var messages = {};
+
+/**
+ * This is the default implementation of Message, which
+ * provides a convenient base for behavior and associations
+ * common to all endpoints. 
+ * 
+ * Note: for AMF Explorer we are only using this class
+ * to implement readExternal
+ */
+messages.AbstractMessage = Class.extend(
+{
+	
+	clientId: null,
+	destination:null,
+	messageId: null,
+	timestamp: null,
+	timeToLive: null,
+	headers: null,
+	body: null,
+	
+	init: function() {},
+	
+	readExternal: function(input) {
+        var flagsArray = this.readFlags(input);
+
+        for (var i = 0; i < flagsArray.length; i++)
+        {
+            var flags = flagsArray[i];
+            var reservedPosition = 0;
+
+            if (i == 0)
+            {
+                if ((flags & BODY_FLAG) != 0)
+                	this.readExternalBody(input);
+        
+                if ((flags & CLIENT_ID_FLAG) != 0)
+                    this.clientId = input.readObject();
+        
+                if ((flags & DESTINATION_FLAG) != 0)
+                    this.destination = input.readObject();
+        
+                if ((flags & HEADERS_FLAG) != 0)
+                    this.headers = input.readObject();
+        
+                if ((flags & MESSAGE_ID_FLAG) != 0)
+                    this.messageId = input.readObject();
+        
+                if ((flags & TIMESTAMP_FLAG) != 0)
+                    this.timestamp = input.readObject();
+        
+                if ((flags & TIME_TO_LIVE_FLAG) != 0)
+                    this.timeToLive = input.readObject();
+
+                reservedPosition = 7;
+            }
+            else if (i == 1)
+            {
+                if ((flags & CLIENT_ID_BYTES_FLAG) != 0)
+                {
+                	var clientIdBytes = input.readObject();
+                	this.clientId = clientIdBytes; 
+                }
+        
+                if ((flags & MESSAGE_ID_BYTES_FLAG) != 0)
+                {
+                	var messageIdBytes = input.readObject();
+                	this.clientId = messageIdBytes; 
+                }
+
+                reservedPosition = 2;
+            }
+
+            // For forwards compatibility, read in any other flagged objects to
+            // preserve the integrity of the input stream...
+            if ((flags >> reservedPosition) != 0)
+            {
+                for (var j = reservedPosition; j < 6; j++)
+                {
+                    if (((flags >> j) & 1) != 0)
+                    {
+                        input.readObject();
+                    }
+                }
+            }
+        }
+    },
+    
+    readExternalBody: function(input) {
+        this.body = input.readObject();
+    },
+    
+    readFlags: function(input) {
+        var hasNextFlag = true;
+        flagsArray = [];
+        var i = 0;
+
+        while (hasNextFlag)
+        {
+            var flags = input.readUnsignedByte();
+            
+            flagsArray[i] = flags;
+
+            if ((flags & HAS_NEXT_FLAG) != 0)
+                hasNextFlag = true;
+            else
+                hasNextFlag = false;
+
+            i++;
+        }
+
+        return flagsArray;
+    }    
+
+});
+
+messages.AsyncMessage = messages.AbstractMessage.extend(
+{	
+	correlationId: null,	
+	
+	init: function() {},
+	
+	readExternal: function(input) {
+        this._super(input);
+
+        var flagsArray = this.readFlags(input);
+        for (var i = 0; i < flagsArray.length; i++)
+        {
+            var flags = flagsArray[i];
+            var reservedPosition = 0;
+
+            if (i == 0)
+            {
+                if ((flags & CORRELATION_ID_FLAG) != 0)
+                    this.correlationId = input.readObject();
+
+                if ((flags & CORRELATION_ID_BYTES_FLAG) != 0)
+                {
+                    var correlationIdBytes = input.readObject();
+                    this.correlationId = correlationIdBytes;
+                }
+
+                reservedPosition = 2;
+            }
+
+            // For forwards compatibility, read in any other flagged objects
+            // to preserve the integrity of the input stream...
+            if ((flags >> reservedPosition) != 0)
+            {
+                for (var j = reservedPosition; j < 6; j++)
+                {
+                    if (((flags >> j) & 1) != 0)
+                    {
+                        input.readObject();
+                    }
+                }
+            }
+        }
+    }
+		
+});
+
+messages.AcknowledgeMessage = messages.AsyncMessage.extend({init: function() {}});
+messages.AcknowledgeMessageExt = messages.AcknowledgeMessage.extend({init: function() {}});
+messages.ErrorMessage = messages.AcknowledgeMessage.extend({init: function() {}});
+messages.AsnycMessageExt = messages.AsyncMessage.extend({init: function() {}});
+messages.CommandMessage = messages.AsyncMessage.extend({init: function() {}});
+messages.CommandMessageExt = messages.CommandMessage.extend({init: function() {}});
+
 
 /**
  * This class can deserialize messages from an input stream
