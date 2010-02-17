@@ -1,4 +1,4 @@
-content amfexplorer chrome/content/amfexplorer/ xpcnativewrappers=no
+content amfexplorer chrome/content/amfexplorer/
 locale	amfexplorer	en-US chrome/locale/en-US/
 skin	amfexplorer	classic/1.0	chrome/skin/classic/
 
