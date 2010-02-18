@@ -657,7 +657,7 @@ Amf0Input = AbstractAmfInput.extend(
         			AMFXTrace.sysout("amf0Input.readObjectValue.kUnsupportedType");
 
                 //Unsupported type found in AMF stream.
-                var ex = new Error("Unsupported type found in AMF stream.","10302");
+                var ex = new Error("10302: Unsupported type found in AMF stream.");
                 throw ex;
 
             case AMF0_kObjectEndType:
@@ -667,7 +667,7 @@ Amf0Input = AbstractAmfInput.extend(
         			AMFXTrace.sysout("amf0Input.readObjectValue.kObjectEndType");
 
                 //Unexpected object end tag in AMF stream.
-            	var ex1 = new Error("Unexpected object end tag in AMF stream.","10303");
+            	var ex1 = new Error("10303: Unexpected object end tag in AMF stream.");
                 throw ex1;
 
             case AMF0_kRecordsetType:
@@ -677,7 +677,7 @@ Amf0Input = AbstractAmfInput.extend(
         			AMFXTrace.sysout("amf0Input.readObjectValue.kRecordsetType");
 
                 //AMF Recordsets are not supported.
-                var ex2 = new Error("AMF Recordsets are not supported.","10304");
+                var ex2 = new Error("1034: AMF Recordsets are not supported.");
                 throw ex2;
 
             default:
@@ -686,7 +686,7 @@ Amf0Input = AbstractAmfInput.extend(
             	if (AMFXTrace.DBG_AMFINPUT)
         			AMFXTrace.sysout("amf0Input.readObjectValue.unknownType");
 
-                var ex3 = new Error("Unknown type: " + type + ".","10301");
+                var ex3 = new Error("10301: Unknown type: " + type + ".");
                 throw ex3;
         }
         return value;
@@ -1042,7 +1042,7 @@ Amf3Input = AbstractAmfInput.extend(
             	if (AMFXTrace.DBG_AMFINPUT)
         			AMFXTrace.sysout("amf3Input.readObjectValue.unknownType");
 
-                var ex = new Error("Unknown type: " + type + ".","10301");
+                var ex = new Error("10301: Unknown type: " + type + ".");
                 throw ex;
         }
 
@@ -1214,6 +1214,18 @@ Amf3Input = AbstractAmfInput.extend(
 
             if (className == null || className.length == 0) {
                 object = {};
+            } else if (className.indexOf(">") == 0) {
+            	// Handle [RemoteClass] (no server alias)
+            	object = {_className: className};
+            } else if (className.indexOf("flex.") == 0){
+            	// Try to get a class
+            	var classParts = className.split(".");
+            	var unqualifiedClassName = classParts[(classParts.length - 1)];            	
+            	if (unqualifiedClassName && flex[unqualifiedClassName]) {
+            		object = new flex[unqualifiedClassName]();	                    
+            	} else {
+            		object = {_className: className};
+            	}            	
             } else {
             	object = {_className: className};
             }
@@ -1270,47 +1282,13 @@ Amf3Input = AbstractAmfInput.extend(
         }
     },
     
-    /**
-     * This implementation is specific to AMF Explorer
-     */
-    readExternalizable: function(className, object) {
-         	
-    	// Debug
-        if (AMFXTrace.DBG_AMFINPUT)
-			AMFXTrace.sysout("amf3Input.readExternalizable.className",{className:className});    	
-    	
-    	var classParts = className.split(".");
-    	var unqualifiedClassName = classParts[(classParts.length - 1)];
-    	
-    	// Debug
-        if (AMFXTrace.DBG_AMFINPUT)
-			AMFXTrace.sysout("amf3Input.readExternalizable.unqualifiedClassName",{unqualifiedClassName:unqualifiedClassName});
-    	
-    	if (unqualifiedClassName && messages[unqualifiedClassName]) {
-    		var obj = new messages[unqualifiedClassName]();
-    		obj.readExternal(this);
-    		
-    		// Debug
-            if (AMFXTrace.DBG_AMFINPUT)
-    			AMFXTrace.sysout("amf3Input.readExternalizable.messageObject",obj);
-            
+    readExternalizable: function(className, object) {         	
+    	if (object.readExternal) {
+    		object.readExternal(this);
     	} else {
-    		var obj = this.readObject();
-    		
-    		// Debug
-            if (AMFXTrace.DBG_AMFINPUT)
-    			AMFXTrace.sysout("amf3Input.readExternalizable.genericObject",obj);
-    	}
-    	
-    	
-    	if (className.indexOf("ArrayCollection") != -1) {
-    		object.source = obj;
-    	} else {
-    		for (var i in obj) {
-    			if (typeof(obj[i]) != "function" && i != "_super")
-    				object[i] = obj[i];
-    		}
-     	}
+    		var ex = new Error("10305: Class " + className + " must implement java.io.Externalizable to receive client IExternalizable instances.");
+            throw ex;    		
+    	}    	
     },
     
     readByteArray: function() {
@@ -1669,7 +1647,39 @@ TraitsInfo = Class.extend(
 	
 });
 
-var messages = {};
+
+/*
+ * This is a package for dynamically instantiated classes.
+ */
+
+var flex = {};
+
+flex.ArrayCollection = Class.extend(
+{
+	source: null,
+	
+	init: function() {},
+	
+	readExternal: function(input) {
+		this.source = input.readObject();
+	}
+});
+
+flex.ArrayList = flex.ArrayCollection.extend({init: function() {}});
+
+flex.ObjectProxy = Class.extend(
+{
+	init: function() {},
+	
+	readExternal: function(input) {
+		var obj = input.readObject();
+		for (var i in obj) {
+			this[i] = obj[i];
+		}
+	}
+});
+
+flex.ManagedObjectProxy = flex.ObjectProxy.extend({init: function() {}});
 
 /**
  * This is the default implementation of Message, which
@@ -1679,7 +1689,7 @@ var messages = {};
  * Note: for AMF Explorer we are only using this class
  * to implement readExternal
  */
-messages.AbstractMessage = Class.extend(
+flex.AbstractMessage = Class.extend(
 {
 	
 	clientId: null,
@@ -1785,7 +1795,7 @@ messages.AbstractMessage = Class.extend(
 
 });
 
-messages.AsyncMessage = messages.AbstractMessage.extend(
+flex.AsyncMessage = flex.AbstractMessage.extend(
 {	
 	correlationId: null,	
 	
@@ -1831,12 +1841,12 @@ messages.AsyncMessage = messages.AbstractMessage.extend(
 		
 });
 
-messages.AcknowledgeMessage = messages.AsyncMessage.extend({init: function() {}});
-messages.AcknowledgeMessageExt = messages.AcknowledgeMessage.extend({init: function() {}});
-messages.ErrorMessage = messages.AcknowledgeMessage.extend({init: function() {}});
-messages.AsnycMessageExt = messages.AsyncMessage.extend({init: function() {}});
-messages.CommandMessage = messages.AsyncMessage.extend({init: function() {}});
-messages.CommandMessageExt = messages.CommandMessage.extend({init: function() {}});
+flex.AcknowledgeMessage = flex.AsyncMessage.extend({init: function() {}});
+flex.AcknowledgeMessageExt = flex.AcknowledgeMessage.extend({init: function() {}});
+flex.ErrorMessage = flex.AcknowledgeMessage.extend({init: function() {}});
+flex.AsnycMessageExt = flex.AsyncMessage.extend({init: function() {}});
+flex.CommandMessage = flex.AsyncMessage.extend({init: function() {}});
+flex.CommandMessageExt = flex.CommandMessage.extend({init: function() {}});
 
 
 /**
@@ -2004,3 +2014,4 @@ AmfMessageDeserializer = Class.extend(
 this.AmfMessageDeserializer = AmfMessageDeserializer;
 	
 }}).apply(AMFExplorerAMFLib);
+
