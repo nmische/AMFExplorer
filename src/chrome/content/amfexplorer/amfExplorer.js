@@ -13,6 +13,13 @@ const NS_SEEK_END = Ci.nsISeekableStream.NS_SEEK_END;
 const FB_CACHE_PREF = "cache.mimeTypes";
 const AMF_MIME = "application/x-amf";
 
+
+const ignoreVars =
+{
+    "__className__": 1,
+	"_super": 1
+};
+
 //	List of AMF content types.
 var contentTypes =
 {
@@ -80,12 +87,31 @@ Firebug.AMFExplorer = extend(Firebug.Module,
     			,"AMFExplorerCaptureWin"
     			,"dialog"
     			,{FBL:FBL,Firebug:Firebug}); 
+    },
+	
+	// CSS helper
+    addStyleSheet: function(panel)
+    {
+        // Make sure the stylesheet isn't appended twice. 
+        var doc = panel.document;
+        if ($("amfExplorerStyles", doc))
+            return;
+        
+        var styleSheet = createStyleSheet(doc, "chrome://amfexplorer/skin/amfExplorer.css");
+        styleSheet.setAttribute("id", "amfExplorerStyles");
+	    addStyleSheet(doc, styleSheet);
+    },
+
+    showPanel: function(browser, panel) 
+    { 
+        if (panel && panel.name == "net")
+            this.addStyleSheet(panel);       
     }
     	
 });
 
 //	************************************************************************************************
-//	Model implementation
+//	Viewer Model implementation
 
 Firebug.AMFViewerModel = {};
 
@@ -158,10 +184,11 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 
 		tabBody.updated = true;
 
-		if (file.requestAMF) {
-			Firebug.DOMPanel.DirTable.tag.replace(
+		if (file.requestAMF) {			
+			Firebug.AMFViewerModel.Tree.tag.replace(
 					{object: file.requestAMF, toggles: this.toggles}, tabBody);
-		}
+		}	
+	
 	},
 
 	parseAMF: function(request, length)
@@ -298,7 +325,7 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 		tabBody.updated = true;
 
 		if (file.responseAMF) {
-			Firebug.DOMPanel.DirTable.tag.replace(
+			Firebug.AMFViewerModel.Tree.tag.replace(
 					{object: file.responseAMF, toggles: this.toggles}, tabBody);
 		}
 	},
@@ -343,6 +370,135 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 	}
 
 });
+
+//	************************************************************************************************
+//	Domplate 
+
+Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
+{
+  tag:
+    TABLE({onclick: "$onClick"},
+      TBODY(
+        FOR("member", "$object|memberIterator",
+          TAG("$row", {member: "$member"})
+		)
+      )
+    ),
+
+  row:
+    TR({class: "amfExplorerRow", $hasChildren: "$member.hasChildren",
+        _repObject: "$member", level: "$member.level"},
+      TD({style: "padding-left: $member.indent\\px"},
+        DIV({class: "amfExplorerLabel"},
+            "$member.name")
+      ),
+      TD(
+        DIV("$member.label")
+      )
+    ),
+
+  loop:
+    FOR("member", "$members",
+      TAG("$row", {member: "$member"})),
+
+  memberIterator: function(object) {
+    return this.getMembers(object);
+  },
+
+  onClick: function(event) {
+    if (!isLeftClick(event))
+      return;
+
+    var row = getAncestorByClass(event.target, "amfExplorerRow");
+    var label = getAncestorByClass(event.target, "amfExplorerLabel");
+    if (label && hasClass(row, "hasChildren"))
+      this.toggleRow(row);
+  },
+
+  toggleRow: function(row) {
+    var level = parseInt(row.getAttribute("level"));
+
+    if (hasClass(row, "opened"))
+    {
+      removeClass(row, "opened");
+
+      var tbody = row.parentNode;
+      for (var firstRow = row.nextSibling; firstRow;
+           firstRow = row.nextSibling)
+      {
+        if (parseInt(firstRow.getAttribute("level")) <= level)
+          break;
+        tbody.removeChild(firstRow);
+      }
+    }
+    else
+    {
+      setClass(row, "opened");
+
+      var repObject = row.repObject;
+      if (repObject) {
+        var members = this.getMembers(repObject.value, level+1);
+        if (members)
+          this.loop.insertRows({members: members}, row);
+      }
+    }
+  },
+
+  getMembers: function(object, level) {
+    if (!level)
+      level = 0;
+
+    var members = [];
+    for (var p in object) {
+		
+		if (ignoreVars[p] == 1) {
+			// Debug			
+			if (AMFXTrace.DBG_AMFRESPONSE || AMFXTrace.DBG_AMFREQUEST)
+				AMFXTrace.sysout("amfViewerModel.tree.getMembers: ignoreVars: " + name + ", " + level, object);
+			continue;
+		}
+		
+		var val;
+        try
+        {
+            val = object[p];  // getter is safe
+        }
+        catch (exc)
+        {
+            // Debug			
+			if (AMFXTrace.DBG_AMFRESPONSE || AMFXTrace.DBG_AMFREQUEST)
+				AMFXTrace.sysout("amfViewerModel.tree.getMembers cannot access " + name, exc);
+        }
+		
+		if (typeof(val) == "function") {
+			// Debug			
+			if (AMFXTrace.DBG_AMFRESPONSE || AMFXTrace.DBG_AMFREQUEST)
+				AMFXTrace.sysout("amfViewerModel.tree.getMembers: skip function: " + name + ", " + level, object);
+			continue;
+		}
+		
+		members.push(this.createMember(p, object[p], level));
+		
+	}
+     
+
+    return members;
+  },
+
+  createMember: function(name, value, level) {
+    var hasChildren = (typeof(value) == "object");
+    return {
+      name: name,
+      label: hasChildren ? "" : value,
+      value: value,
+      level: level,
+      indent: level*16,
+      hasChildren: hasChildren
+    };
+  }
+});
+
+
 
 //	************************************************************************************************
 //	Helpers

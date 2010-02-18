@@ -135,6 +135,61 @@ Class.extend = function(prop) {
     return Class;
 };	
 
+// The base ArrayClass implementation (does nothing)
+ArrayClass = function(){};
+ArrayClass.prototype = new Array();
+
+// Create a new Class that inherits from this class
+ArrayClass.extend = function(prop) {
+	var _super = this.prototype;
+
+	// Instantiate a base class (but only create the instance,
+	// don't run the init constructor)
+    initializing = true;
+    var prototype = new this();
+    initializing = false;
+
+    // Copy the properties over onto the new prototype
+    for (var name in prop) {
+    // Check if we're overwriting an existing function
+    prototype[name] = typeof prop[name] == "function" &&
+    	typeof _super[name] == "function" && fnTest.test(prop[name]) ?
+    			(function(name, fn){
+    				return function() {
+    					var tmp = this._super;
+   
+    					// Add a new ._super() method that is the same method
+    					// but on the super-class
+    					this._super = _super[name];
+   
+    					// The method only need to be bound temporarily, so we
+    					// remove it when we're done executing
+    					var ret = fn.apply(this, arguments);       
+    					this._super = tmp;
+           
+    					return ret;
+    				};
+    			})(name, prop[name]) : prop[name];
+    }
+    // The dummy class constructor
+    function ArrayClass() {
+    	// All construction is actually done in the init method
+    	if ( !initializing && this.init )
+    		this.init.apply(this, arguments);
+    }
+
+    // Populate our constructed prototype object
+    ArrayClass.prototype = prototype;
+
+    // Enforce the constructor to be what we expect
+    ArrayClass.constructor = Class;
+
+    // And make this class extendable
+    ArrayClass.extend = arguments.callee;
+   
+    return ArrayClass;
+};	
+
 /**
  * @class JavaScript implementation of DataInputStream. 
  */	
@@ -416,7 +471,7 @@ AbstractAmfInput = Class.extend(
     read: function(bytes, offset, length) {
     	
     	if(!bytes)
-    		return this.in.read();
+    		return this._in.read();
     	
     	if(!offset)
     		var offset=0;
@@ -805,7 +860,7 @@ Amf0Input = AbstractAmfInput.extend(
     	if (typeof(className) === "undefined" || className == null || className.length == 0 ) {
             object = {};
         } else {
-            object = {_className: className};
+            object = {__className__: className};
         }
 
         var objectId = this.rememberObject(object);
@@ -1216,18 +1271,19 @@ Amf3Input = AbstractAmfInput.extend(
                 object = {};
             } else if (className.indexOf(">") == 0) {
             	// Handle [RemoteClass] (no server alias)
-            	object = {_className: className};
+            	object = {__className__: className};
             } else if (className.indexOf("flex.") == 0){
             	// Try to get a class
             	var classParts = className.split(".");
             	var unqualifiedClassName = classParts[(classParts.length - 1)];            	
             	if (unqualifiedClassName && flex[unqualifiedClassName]) {
-            		object = new flex[unqualifiedClassName]();	                    
+            		object = new flex[unqualifiedClassName]();	
+					object.__className__ = className;                    
             	} else {
-            		object = {_className: className};
+            		object = {__className__: className};
             	}            	
             } else {
-            	object = {_className: className};
+            	object = {__className__: className};
             }
 
             // Remember our instance in the object table
@@ -1654,14 +1710,17 @@ TraitsInfo = Class.extend(
 
 var flex = {};
 
-flex.ArrayCollection = Class.extend(
+flex.ArrayCollection = ArrayClass.extend(
 {
-	source: null,
+	__className__: null,
 	
 	init: function() {},
 	
 	readExternal: function(input) {
-		this.source = input.readObject();
+		var obj = input.readObject();
+		for (var i in obj) {
+			this[i] = obj[i];
+		}
 	}
 });
 
@@ -1669,6 +1728,8 @@ flex.ArrayList = flex.ArrayCollection.extend({init: function() {}});
 
 flex.ObjectProxy = Class.extend(
 {
+	__className__: null,
+	
 	init: function() {},
 	
 	readExternal: function(input) {
@@ -1691,6 +1752,8 @@ flex.ManagedObjectProxy = flex.ObjectProxy.extend({init: function() {}});
  */
 flex.AbstractMessage = Class.extend(
 {
+	
+	__className__: null,
 	
 	clientId: null,
 	destination:null,

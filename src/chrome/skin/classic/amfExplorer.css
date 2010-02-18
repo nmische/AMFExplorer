@@ -1,8 +1,5 @@
-.amfExplorerErrorMsg {
-    color: red;
-    padding-bottom: 15px;
-}
 
-.amfExplorerErrorSource {
-    color: gray;
-}
+@import "chrome://amfexplorer-os/skin/amfExplorer.css";
+@import "chrome://amfexplorer/skin/amfExplorerBase.css";
+
+
