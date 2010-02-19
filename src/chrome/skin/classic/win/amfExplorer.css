@@ -1,12 +1,1 @@
-
-.amfExplorerRow.hasChildren .amfExplorerLabel {
-    background-image: url(chrome://amfexplorer/skin/win/twistyClosed.png);
-    background-repeat: no-repeat;
-    background-position: 2px 2px;
-}
-
-.amfExplorerRow.hasChildren.opened .amfExplorerLabel {
-    background-image: url(chrome://amfexplorer/skin/win/twistyOpen.png);
-}
-
-
+/* for future use */

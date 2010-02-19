@@ -8,13 +8,14 @@
 <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"> 
 	<script src="chrome://amfexplorer/content/trace.js" type="application/x-javascript"/>
 	<script src="chrome://amfexplorer/content/amfLib.js" type="application/x-javascript"/>
-    <script src="chrome://amfexplorer/content/amfExplorer.js" type="application/x-javascript"/>
+	<script src="chrome://amfexplorer/content/amfExplorer.js" type="application/x-javascript"/>
+	<script src="chrome://amfexplorer/content/reps.js" type="application/x-javascript"/>
 
-    <stringbundleset id="stringbundleset">
-        <stringbundle id="strings_amfExplorer" src="chrome://amfexplorer/locale/amfExplorer.properties"/>
-    </stringbundleset>
-    
-    <!-- menu -->
+	<stringbundleset id="stringbundleset">
+		<stringbundle id="strings_amfExplorer" src="chrome://amfexplorer/locale/amfExplorer.properties"/>
+	</stringbundleset>
+
+	<!-- menu -->
 	<menupopup id="menu_ToolsPopup">
 		<menu id="menu_amfExplorer" 
 			label="&amfExplorer.AmfExplorer;" 
@@ -30,10 +31,10 @@
 				<menuseparator id="amfExplorer_aboutSeparator"/>
 				<menuitem id="amfExplorer_about" 
 					label="&amfExplorer.About;"
-					oncommand="Firebug.AMFExplorer.openAboutDialog()"/>        
+					oncommand="Firebug.AMFExplorer.openAboutDialog()"/> 
 			</menupopup>
 		</menu>
 	</menupopup>
-	
-	
+
+
 </overlay>

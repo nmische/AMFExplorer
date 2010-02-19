@@ -1,5 +1,4 @@
 
-
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
@@ -46,24 +45,24 @@ var AMFExplorerConfDialog =
 		} else {
 			mimeTypes.push(AMF_MIME);
 			Firebug.setPref(Firebug.prefDomain, FB_CACHE_PREF, mimeTypes.join(","));
-		}    	   	
+		}
 	},
 		
 	onRestartFirefox: function()
-    {
-        // change our preference
+	{
+		// change our preference
 		this.toggleCaptureResponses();
 		
 		// restart Firefox
 		Cc["@mozilla.org/toolkit/app-startup;1"].getService(Ci.nsIAppStartup).
-            quit(Ci.nsIAppStartup.eRestart | Ci.nsIAppStartup.eAttemptQuit);
-    },
-    
-    // Array Remove - By John Resig (MIT Licensed)
-    arrayRemove: function(array, from, to) {
-    	var rest = array.slice((to || from) + 1 || array.length);
-    	array.length = from < 0 ? array.length + from : from;
-    	return array.push.apply(array, rest);
-    }
-		
+			quit(Ci.nsIAppStartup.eRestart | Ci.nsIAppStartup.eAttemptQuit);
+	},
+	
+	// Array Remove - By John Resig (MIT Licensed)
+	arrayRemove: function(array, from, to) {
+		var rest = array.slice((to || from) + 1 || array.length);
+		array.length = from < 0 ? array.length + from : from;
+		return array.push.apply(array, rest);
+	}
+
 };

@@ -1,15 +1,3 @@
-.amfExplorerRow .amfExplorerLabel {
-    padding-left: 18px;
-    padding-right: 10px;
-    white-space: nowrap;
-}
-
-.amfExplorerRow.hasChildren .amfExplorerLabel:hover {
-    color: blue;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
 .amfExplorerErrorMsg {
     color: red;
     padding-bottom: 15px;

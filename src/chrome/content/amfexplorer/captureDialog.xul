@@ -16,7 +16,7 @@
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
 	<script type="application/x-javascript" src="chrome://amfexplorer/content/captureDialog.js"/>
-  
-  	<description id="amfExplorerCaptureMsg" style="white-space: pre;"></description>
-  	
+
+	<description id="amfExplorerCaptureMsg" style="white-space: pre;"></description>
+
 </dialog>
