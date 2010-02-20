@@ -181,6 +181,8 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 
 Firebug.AMFViewerModel = {};
 
+var DOMPabePanel = new Firebug.DOMBasePanel();
+
 
 //	************************************************************************************************
 //	AMF Request Model
@@ -253,7 +255,7 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 		
 		if (file.requestAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.requestAMF, toggles: this.toggles}, tabBody);
+					{object: file.requestAMF, toggles: this.toggles, domPanel: DOMPabePanel}, tabBody);
 		}	
 	
 	},
@@ -393,7 +395,7 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 		
 		if (file.responseAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.responseAMF, toggles: this.toggles}, tabBody);
+					{object: file.responseAMF, toggles: this.toggles, domPanel: DOMPabePanel}, tabBody);
 		}
 	},
 	
@@ -475,7 +477,7 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 		),
 
 	tag:
-		TABLE({"class": "domTable", cellpadding: 0, cellspacing: 0, onclick: "$onClick", role: "tree"},
+		TABLE({"class": "domTable", cellpadding: 0, cellspacing: 0, onclick: "$onClick", role: "tree", _domPanel: "$domPanel"},
 			TBODY({role: "presentation"},
 				SizerRow,
 				FOR("member", "$object|memberIterator",
