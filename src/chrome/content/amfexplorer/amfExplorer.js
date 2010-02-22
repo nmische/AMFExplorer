@@ -181,10 +181,6 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 
 Firebug.AMFViewerModel = {};
 
-//	Used by both viewer modules
-var domBasePanel = new Firebug.DOMBasePanel();
-
-
 //	************************************************************************************************
 //	AMF Request Model
 
@@ -253,7 +249,7 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 		
 		if (file.requestAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.requestAMF, toggles: this.toggles, domPanel: domBasePanel}, tabBody);
+					{object: file.requestAMF}, tabBody);
 		}	
 	
 	},
@@ -390,7 +386,7 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 		
 		if (file.responseAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.responseAMF, toggles: this.toggles, domPanel: domBasePanel}, tabBody);
+					{object: file.responseAMF}, tabBody);
 		}
 	},
 	
@@ -472,7 +468,7 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 		),
 
 	tag:
-		TABLE({"class": "domTable", cellpadding: 0, cellspacing: 0, onclick: "$onClick", role: "tree", _domPanel: "$domPanel"},
+		TABLE({"class": "domTable", cellpadding: 0, cellspacing: 0, onclick: "$onClick", role: "tree"},
 			TBODY({role: "presentation"},
 				SizerRow,
 				FOR("member", "$object|memberIterator",
@@ -515,7 +511,7 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 
 			if (isString)
 			{
-				var rowValue = panel.getRowPropertyValue(row);
+				var rowValue = (!panel) ? Firebug.DOMBasePanel.prototype.getRowPropertyValue(row) : panel.getRowPropertyValue(row) ;
 				row.lastChild.firstChild.textContent = '"' + cropMultipleLines(rowValue) + '"';
 			}
 			else
@@ -541,7 +537,7 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 			setClass(row, "opened");
 			if (isString)
 			{
-				var rowValue = panel.getRowPropertyValue(row);
+				var rowValue = (!panel) ? Firebug.DOMBasePanel.prototype.getRowPropertyValue(row) : panel.getRowPropertyValue(row) ;
 				row.lastChild.firstChild.textContent = '"' + rowValue + '"';
 			}
 			else
@@ -717,8 +713,8 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 Firebug.AMFViewerModel.ParseError = domplate(Firebug.Rep, 
 {
 	tag:
-		DIV({class: "xmlInfoError"},
-			DIV({class: "xmlInfoErrorMsg"}, "$error.message")
+		DIV({"class": "xmlInfoError"},
+			DIV({"class": "xmlInfoErrorMsg"}, "$error.message")
 		)
 });
 
