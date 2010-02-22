@@ -144,7 +144,7 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 				{
 					// Debug
 					if (AMFXTrace.DBG_REP)
-						AMFXTrace.sysout("getRep type: " + type, {object:object, rep: rep});
+						AMFXTrace.sysout("amfExplorer.getRep type: " + type, {object:object, rep: rep});
 					return rep;
 				}
 			}
@@ -153,16 +153,16 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 				if (FBTrace.DBG_REP)
 				{
 					// Debug
-					AMFXTrace.sysout("firebug.getRep FAILS: "+ exc, exc);
+					AMFXTrace.sysout("amfExplorer.getRep FAILS: "+ exc, exc);
 					// Debug
-					AMFXTrace.sysout("firebug.getRep reps["+i+"/"+reps.length+"]: "+(typeof(reps[i])), reps[i]);
+					AMFXTrace.sysout("amfExplorer.getRep reps["+i+"/"+reps.length+"]: "+(typeof(reps[i])), reps[i]);
 				}
 			}
 		}
 		
 		// Debug
 		if (AMFXTrace.DBG_REP)
-			AMFXTrace.sysout("getRep default type: " + type,{object:object, rep:rep});
+			AMFXTrace.sysout("amfExplorer.getRep default type: " + type,{object:object, rep:rep});
 		
 		return (type == 'function')?defaultFuncRep:defaultRep;
 	},
@@ -181,7 +181,8 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 
 Firebug.AMFViewerModel = {};
 
-var DOMPabePanel = new Firebug.DOMBasePanel();
+//	Used by both viewer modules
+var domBasePanel = new Firebug.DOMBasePanel();
 
 
 //	************************************************************************************************
@@ -197,9 +198,6 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 	{
 		Firebug.Module.initialize.apply(this, arguments);
 		Firebug.NetMonitor.NetInfoBody.addListener(this);
-		
-		// Used by Firebug.DOMPanel.DirTable domplate.
-		this.toggles = {};
 	},
 	
 	shutdown: function()
@@ -255,7 +253,7 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 		
 		if (file.requestAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.requestAMF, toggles: this.toggles, domPanel: DOMPabePanel}, tabBody);
+					{object: file.requestAMF, toggles: this.toggles, domPanel: domBasePanel}, tabBody);
 		}	
 	
 	},
@@ -344,9 +342,6 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 	{
 		Firebug.Module.initialize.apply(this, arguments);
 		Firebug.NetMonitor.NetInfoBody.addListener(this);
-		
-		// Used by Firebug.DOMPanel.DirTable domplate.
-		this.toggles = {};
 	},
 	
 	shutdown: function()
@@ -395,7 +390,7 @@ Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 		
 		if (file.responseAMF) {
 			Firebug.AMFViewerModel.Tree.tag.replace(
-					{object: file.responseAMF, toggles: this.toggles, domPanel: DOMPabePanel}, tabBody);
+					{object: file.responseAMF, toggles: this.toggles, domPanel: domBasePanel}, tabBody);
 		}
 	},
 	
@@ -525,19 +520,6 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 			}
 			else
 			{
-				if (toggles)
-				{
-					var path = getPath(row);
-
-					// Remove the path from the toggle tree
-					for (var i = 0; i < path.length; ++i)
-					{
-						if (i == path.length-1)
-							delete toggles[path[i]];
-						else
-							toggles = toggles[path[i]];
-					}
-				}
 
 				var rowTag = this.rowTag;
 				var tbody = row.parentNode;
@@ -564,21 +546,6 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 			}
 			else
 			{
-
-				if (toggles)
-				{
-					var path = getPath(row);
-
-					// Mark the path in the toggle tree
-					for (var i = 0; i < path.length; ++i)
-					{
-						var name = path[i];
-						if (toggles.hasOwnProperty(name))
-							toggles = toggles[name];
-						else
-							toggles = toggles[name] = {};
-					}
-				}
 
 				var context = panel ? panel.context : null;
 				var members = this.getMembers(target.repObject, level+1);
