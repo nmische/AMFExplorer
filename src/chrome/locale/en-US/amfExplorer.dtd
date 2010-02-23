@@ -1,5 +1,5 @@
 <!ENTITY amfExplorer.About "About AMF Explorer">
 <!ENTITY amfExplorer.AmfExplorer "AMF Explorer">
-<!ENTITY amfExplorer.CaptureResponses "Capture AMF Responses">
-<!ENTITY amfExplorer.CaptureDialogTitle "Update Capture Settings">
+<!ENTITY amfExplorer.CaptureResponses "Cache AMF Responses">
+<!ENTITY amfExplorer.CaptureDialogTitle "Update Cache Settings">
 
