@@ -1,6 +1,6 @@
-content amfexplorer chrome/content/amfexplorer/
-locale	amfexplorer	en-US chrome/locale/en-US/
-skin	amfexplorer	classic/1.0	chrome/skin/classic/
-skin	amfexplorer-os	classic/1.0	chrome/skin/classic/win/
+content amfexplorer                  chrome/content/amfexplorer/
+locale  amfexplorer     en-US        chrome/locale/en-US/
+skin    amfexplorer     classic/1.0  chrome/skin/classic/
+skin    amfexplorer-os  classic/1.0  chrome/skin/classic/win/
 
-overlay chrome://firebug/content/firebugOverlay.xul         chrome://amfexplorer/content/amfExplorer.xul
+overlay chrome://firebug/content/firebugOverlay.xul  chrome://amfexplorer/content/amfExplorer.xul
