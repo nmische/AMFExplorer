@@ -188,8 +188,6 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 {
 	dispatchName: "amfRequestViewer",
 	
-	amfDeserializer: null,
-	
 	initialize: function() 
 	{
 		Firebug.Module.initialize.apply(this, arguments);
@@ -253,8 +251,6 @@ Firebug.AMFViewerModel.AMFRequest = extend(Firebug.Module,
 Firebug.AMFViewerModel.AMFResponse = extend(Firebug.Module,
 {
 	dispatchName: "amfResponseViewer",
-	
-	amfDeserializer: null,
 	
 	initialize: function() 
 	{
