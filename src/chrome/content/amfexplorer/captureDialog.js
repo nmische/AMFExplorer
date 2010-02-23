@@ -37,14 +37,14 @@ var AMFExplorerConfDialog =
 		
 	toggleCaptureResponses: function() {
 		var mimeTypes = Firebug.getPref(Firebug.prefDomain, FB_CACHE_PREF);
-		mimeTypes = (mimeTypes.length != 0) ? mimeTypes.split(",") : [] ;
+		mimeTypes = (mimeTypes.length != 0) ? mimeTypes.split(" ") : [] ;
 		if (this.responseCaptureEnabled()){
 			var i = mimeTypes.indexOf(AMF_MIME);
 			this.arrayRemove(mimeTypes,i);
-			Firebug.setPref(Firebug.prefDomain, FB_CACHE_PREF, mimeTypes.join(","));
+			Firebug.setPref(Firebug.prefDomain, FB_CACHE_PREF, mimeTypes.join(" "));
 		} else {
 			mimeTypes.push(AMF_MIME);
-			Firebug.setPref(Firebug.prefDomain, FB_CACHE_PREF, mimeTypes.join(","));
+			Firebug.setPref(Firebug.prefDomain, FB_CACHE_PREF, mimeTypes.join(" "));
 		}
 	},
 		
