@@ -218,4 +218,6 @@ Firebug.AMFExplorer.registerRep(
 
 Firebug.AMFExplorer.setDefaultReps(FirebugReps.Func, FirebugReps.Obj);
 
+Firebug.registerRep(this.Class, this.ArrayClass);
+
 }});
