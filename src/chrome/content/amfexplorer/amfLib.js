@@ -66,7 +66,7 @@ const MESSAGE_ID_BYTES_FLAG = 2;
 const CORRELATION_ID_FLAG = 1;
 const CORRELATION_ID_BYTES_FLAG = 2;
 
-// Simplified implementaiton of the class alias registry 
+// Simplified implementation of the class alias registry 
 var classAliasRegistry =
 {	
 	"DSK": "flex.messaging.messages.AcknowledgeMessageExt",
