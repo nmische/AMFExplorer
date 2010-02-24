@@ -371,14 +371,6 @@ DataInputStream = Class.extend(
 	},
 
 	/**
-	 * Reads in a string that has been encoded using a modified UTF-8 format with a 32-bit string length.
-	 */
-	readLongUTF: function() {
-		var length = this.readLong();
-		return String(this._stream.readBytes(length));
-	},
-
-	/**
 	 * Reads two input bytes and returns a short value.
 	 */
 	readShort: function() {
@@ -534,10 +526,6 @@ AbstractAmfInput = Class.extend(
 
 	readLong: function() {
 		return this._in.readLong();
-	},
-
-	readLongUTF: function() {
-		return this._in.readLongUTF();
 	},
 
 	readShort: function() {
@@ -896,8 +884,14 @@ Amf0Input = AbstractAmfInput.extend(
 
 		return object;
 	},
-
-	// readLongUTF: implemented in tAbstractAmfInput
+	
+	/**
+	 * Reads in a string that has been encoded using a modified UTF-8 format with a 32-bit string length.
+	 */
+	readLongUTF: function() {
+		var length = this.readInt();
+		return this._in.readUTF(length);
+	},
 
 	readXml: function() {
 		var xml = this.readLongUTF();
@@ -1198,7 +1192,7 @@ Amf3Input = AbstractAmfInput.extend(
 
 					// Debug		  
 					if (AMFXTrace.DBG_AMFINPUT)
-						AMFXTrace.sysout("amf3Input.readArray.startECMAArray",(objectTable.length - 1));
+						AMFXTrace.sysout("amf3Input.readArray.startECMAArray",(this._objectTable.length - 1));
 				}
 
 				var value = this.readObject();
@@ -1431,7 +1425,7 @@ Amf3Input = AbstractAmfInput.extend(
 		var value;
 
 		// Each byte must be treated as unsigned
-		var b = this._in.readByte() & 0xFF;
+		var b = this._in.readByte();
 
 		if (b < 128)
 		{
@@ -1439,7 +1433,7 @@ Amf3Input = AbstractAmfInput.extend(
 		}
 
 		value = (b & 0x7F) << 7;
-		b = this._in.readByte() & 0xFF;
+		b = this._in.readByte();
 
 		if (b < 128)
 		{
@@ -1447,7 +1441,7 @@ Amf3Input = AbstractAmfInput.extend(
 		}
 
 		value = (value | (b & 0x7F)) << 7;
-		b = this._in.readByte() & 0xFF;
+		b = this._in.readByte();
 
 		if (b < 128)
 		{
@@ -1455,7 +1449,7 @@ Amf3Input = AbstractAmfInput.extend(
 		}
 
 		value = (value | (b & 0x7F)) << 8;
-		b = this._in.readByte() & 0xFF;
+		b = this._in.readByte();
 
 		return (value | b);
 	},
