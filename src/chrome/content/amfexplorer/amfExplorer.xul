@@ -8,6 +8,7 @@
 <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"> 
 	<script src="chrome://amfexplorer/content/trace.js" type="application/x-javascript"/>
 	<script src="chrome://amfexplorer/content/amfLib.js" type="application/x-javascript"/>
+	<script src="chrome://amfexplorer/content/amfCache.js" type="application/x-javascript"/>
 	<script src="chrome://amfexplorer/content/amfExplorer.js" type="application/x-javascript"/>
 	<script src="chrome://amfexplorer/content/reps.js" type="application/x-javascript"/>
 
