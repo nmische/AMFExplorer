@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="1024" minHeight="768">
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical" minWidth="800" minHeight="600" viewSourceURL="srcview/index.html">
 	
 	<mx:Script>
 		<![CDATA[
@@ -17,7 +17,12 @@
 			
 			protected function resultHandler(e:ResultEvent):void
 			{
-				mx.controls.Alert.show(e.result.result);
+				mx.controls.Alert.show(e.result.toString());
+			}
+			
+			protected function acHandler(e:ResultEvent):void
+			{
+				testGrid.dataProvider = e.result as ArrayCollection;
 			}
 			
 			// Null			
@@ -125,7 +130,7 @@
 			// Multiple ArrayCollections			
 			protected function button13_clickHandler(event:MouseEvent):void
 			{
-							
+				
 				var obj1:TestVO = new TestVO();
 				obj1.id = 1;
 				obj1.name = "Test Object 1";
@@ -148,6 +153,14 @@
 				
 			}			
 
+			
+			// ArrayCollection	
+			protected function button14_clickHandler(event:MouseEvent):void
+			{
+				var input:int = parseInt(numItems.text);				
+				testService.testArrayCollection(input);				
+			}			
+
 		]]>
 	</mx:Script>
 	
@@ -161,39 +174,74 @@
 	
 	<mx:RemoteObject
 		id="testService"
-		source="amfexplorer.services.testService"
+		source="demos.firebug.amfexplorer.services.testService"
 		destination="ColdFusion"
-		channelSet="{myAMFChannelSet}" 
-		result="resultHandler"
-		fault="faultHandler" />
+		channelSet="{myAMFChannelSet}"		
+		fault="faultHandler(event)">
 	
-	<mx:VBox paddingTop="10" paddingLeft="10" verticalGap="5">
+		<mx:method name="testEcho" result="resultHandler(event)" />
+		<mx:method name="testArrayCollection" result="acHandler(event)" />
+	
+	</mx:RemoteObject>
+	
+	<mx:HBox horizontalGap="5">
 		
-		<mx:Button id="button01" label="Null" click="button01_clickHandler(event)" />
-		
-		<mx:Button id="button02" label="False" click="button02_clickHandler(event)" />
-		
-		<mx:Button id="button03" label="True" click="button03_clickHandler(event)" />
-		
-		<mx:Button id="button04" label="Integer" click="button04_clickHandler(event)" />
-		
-		<mx:Button id="button05" label="Double" click="button05_clickHandler(event)" />
-		
-		<mx:Button id="button06" label="String" click="button06_clickHandler(event)" />
-		
-		<mx:Button id="button07" label="XML Document" click="button07_clickHandler(event)" />
-		
-		<mx:Button id="button08" label="Date" click="button08_clickHandler(event)" />
-		
-		<mx:Button id="button09" label="Array" click="button09_clickHandler(event)" />
-		
-		<mx:Button id="button10" label="Object" click="button10_clickHandler(event)" />
-		
-		<mx:Button id="button11" label="XML" click="button11_clickHandler(event)" />
-		
-		<mx:Button id="button12" label="ByteArray" click="button12_clickHandler(event)" />
+		<mx:VBox>
 			
-		<mx:Button label="Multiple Array Collections Test" click="button13_clickHandler(event)" />
+			<mx:Button id="button01" label="Null" click="button01_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button02" label="False" click="button02_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button03" label="True" click="button03_clickHandler(event)"  width="140"/>
+			
+		</mx:VBox>
+		
+		<mx:VBox>
+			
+			<mx:Button id="button04" label="Integer" click="button04_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button05" label="Double" click="button05_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button06" label="String" click="button06_clickHandler(event)"  width="140"/>
+			
+		</mx:VBox>
+		
+		<mx:VBox>
+			
+			<mx:Button id="button07" label="XML Document" click="button07_clickHandler(event)"  width="140"/>
+		
+			<mx:Button id="button08" label="Date" click="button08_clickHandler(event)"  width="140"/>
+		
+			<mx:Button id="button09" label="Array" click="button09_clickHandler(event)"  width="140"/>
+		
+		</mx:VBox>
+		
+		<mx:VBox>
+			
+			<mx:Button id="button10" label="Object" click="button10_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button11" label="XML" click="button11_clickHandler(event)"  width="140"/>
+			
+			<mx:Button id="button12" label="ByteArray" click="button12_clickHandler(event)"  width="140"/>
+			
+		</mx:VBox>		
+		
+	</mx:HBox>
+	
+	<mx:VBox>
+		
+		<mx:Button label="Array Collections" click="button13_clickHandler(event)"  width="140"/>
+		
+	</mx:VBox>
+	
+	<mx:VBox verticalGap="5">		
+		<mx:HBox>
+			<mx:Label text="Number Of Items:"/>
+			<mx:TextInput id="numItems"  width="40"/>
+			<mx:Button label="Get Array Collection" click="button14_clickHandler(event)" />
+		</mx:HBox>
+		
+		<mx:DataGrid id="testGrid" width="600" height="300" />		
 		
 	</mx:VBox>
 	
