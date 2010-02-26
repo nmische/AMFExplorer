@@ -129,6 +129,7 @@ CacheListener.prototype =
 	onDataAvailable: function(context, request, requestContext, inputStream, offset, count)
 	{
 		
+		
 		if (this.shouldCacheRequest(request)) {
 			
 			try {
@@ -196,6 +197,21 @@ CacheListener.prototype =
 			if (AMFXTrace.DBG_CACHELISTENER)
 				AMFXTrace.sysout("cacheListener.onStopRequest: " + cacheKey);
 			
+			var shouldSave = Firebug.getPref("extensions.amfexplorer","saveResponses");
+			
+			if (shouldSave) {
+				var amfStream = this.cache[cacheKey].storageStream.newInputStream(0);
+				var filename = cacheKey.replace(/\W/g,"");
+				filename += "_res.amf";
+				
+
+				// Debug
+				if (AMFXTrace.DBG_CACHELISTENER)
+					AMFXTrace.sysout("cacheListener.onStopRequest.callSaveStream: " + filename);
+				
+				saveStream( amfStream, filename );
+			}
+			
 		}
 	}
 };
@@ -222,6 +238,48 @@ function getCacheKey(request)
 		ch.updateFromStream(ss, ss.available());
 		var hash = ch.finish(true);
 		return hash;   
+}
+
+function saveStream(stream, filename)
+{
+
+	try {	
+	
+		var dirService = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
+		
+		var aFile = dirService.get("ProfD", Ci.nsIFile);
+		aFile.append("amfexplorer");
+		aFile.append(filename);
+		aFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 600);
+			            
+		var fos = Cc["@mozilla.org/network/safe-file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
+		fos.init(aFile, 0x04 | 0x08 | 0x20, 0600, 0); // write, create, truncate
+		
+		var bos = Cc["@mozilla.org/network/buffered-output-stream;1"].createInstance(Ci.nsIBufferedOutputStream);
+		bos.init(fos, 8192);            
+		
+		for (var count = stream.available(); count; count = stream.available())
+	   		bos.writeFrom(stream, count);
+		
+		// Debug
+		if (AMFXTrace.DBG_CACHELISTENER)
+			AMFXTrace.sysout("saveResponse: " + filename);
+	
+	} catch (e) {
+		// Debug
+		if (AMFXTrace.DBG_CACHELISTENER)
+			AMFXTrace.sysout("saveResponse ERROR: " + e.message);
+		
+	} finally {
+		if (fos) {		
+			if (fos instanceof Ci.nsISafeOutputStream) {
+				fos.finish();
+			} else {
+				fos.close();
+			}
+		}
+	}	
+	
 }
 
 // ************************************************************************************************

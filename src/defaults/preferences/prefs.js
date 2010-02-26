@@ -4,3 +4,5 @@ pref("extensions.amfexplorer.DBG_AMFINPUT", false);
 pref("extensions.amfexplorer.DBG_DOMPLATE", false);
 pref("extensions.amfexplorer.DBG_REP", false);
 pref("extensions.amfexplorer.DBG_CACHELISTENER", true);
+
+pref("extensions.amfexplorer.saveResponses", true);
