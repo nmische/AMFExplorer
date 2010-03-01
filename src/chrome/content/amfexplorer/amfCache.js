@@ -49,6 +49,26 @@ Firebug.AMFCacheListener = extend(Firebug.Module,
 function CacheListener()
 {
 	this.cache = {};
+	
+	this.shouldCacheRequest = function(request){
+		// Debug
+		if (AMFXTrace.DBG_CACHELISTENER)
+			AMFXTrace.sysout("cacheListener.shouldCacheRequest");
+		
+		request.QueryInterface(Ci.nsIHttpChannel);
+		
+ 		// Cache only amf responses for now.
+		var contentType = request.contentType;
+		if (contentType)
+			contentType = contentType.split(";")[0];
+		
+		contentType = trim(contentType);		
+		
+		if (contentTypes[contentType])
+			return true;
+		
+		return false;
+	};
 }
 
 CacheListener.prototype = 
@@ -94,23 +114,6 @@ CacheListener.prototype =
 			AMFXTrace.sysout("cacheListener.invalidate; " + cacheKey);
 
 		delete this.cache[cacheKey];
-	},
-	
-	shouldCacheRequest: function(request)
-	{
-		request.QueryInterface(Ci.nsIHttpChannel);
-		
- 		// Cache only amf responses for now.
-		var contentType = request.contentType;
-		if (contentType)
-			contentType = contentType.split(";")[0];
-		
-		contentType = trim(contentType);		
-		
-		if (contentTypes[contentType])
-			return true;
-		
-		return false;
 	},
 	
 	onStartRequest: function(context, request, requestContext)
@@ -202,8 +205,7 @@ CacheListener.prototype =
 			if (shouldSave) {
 				var amfStream = this.cache[cacheKey].storageStream.newInputStream(0);
 				var filename = cacheKey.replace(/\W/g,"");
-				filename += "_res.amf";
-				
+				filename += "_res.amf";				
 
 				// Debug
 				if (AMFXTrace.DBG_CACHELISTENER)
