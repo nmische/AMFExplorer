@@ -397,7 +397,29 @@ DataInputStream = Class.extend(
 	readUTF: function(length) {
 		if(!length)
 			var length = this.readUnsignedShort();
-		return String(this._stream.readBytes(length));		
+
+		var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].createInstance(Ci.nsIScriptableUnicodeConverter);
+		converter.charset = "UTF-8";
+
+		var remaining = length;
+		var ba = [];
+		var count, read;
+
+		while (remaining) {
+			count = this._stream.available();
+			read = (count < remaining) ? count : remaining;
+			chunk = this._stream.readByteArray(read);
+			ba.push.apply(ba, chunk);
+			remaining -= read;
+		}
+
+		var str = converter.convertFromByteArray(ba, ba.length);
+
+		// Debug
+		if (AMFXTrace.DBG_AMFINPUT)
+			AMFXTrace.sysout("dataInputStream.readUTF.string", str);
+
+		return str;
 	},
 
 	/**
