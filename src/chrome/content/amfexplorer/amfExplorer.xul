@@ -20,15 +20,7 @@
 		<menu id="menu_amfExplorer" 
 			label="&amfExplorer.AmfExplorer;" 
 			insertbefore="javascriptConsole">
-			<menupopup 
-				onpopupshowing="return Firebug.AMFExplorer.onMenuShowing(this);"
-				id="menu_amfExplorerPopUp">					
-				<menuitem id="amfExplorer_toggleCapture" 
-					label="&amfExplorer.CaptureResponses;"
-					type="checkbox"
-					oncommand="Firebug.AMFExplorer.openCaptureDialog()"
-					option="cache.mimeTypes"/>				
-				<menuseparator id="amfExplorer_aboutSeparator"/>
+			<menupopup id="menu_amfExplorerPopUp">					
 				<menuitem id="amfExplorer_about" 
 					label="&amfExplorer.About;"
 					oncommand="Firebug.AMFExplorer.openAboutDialog()"/> 

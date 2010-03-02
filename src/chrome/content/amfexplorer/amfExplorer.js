@@ -79,40 +79,6 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 				"chrome,centerscreen,modal", "urn:mozilla:item:amfexplorer@riaforge.org", extensionManager.datasource);
 	},
 	
-	onMenuShowing: function(popup)
-	{
-		for (var child = popup.firstChild; child; child = child.nextSibling)
-		{
-			if (child.localName == "menuitem")
-			{
-				var option = child.getAttribute("option");
-				if (option)
-				{
-					var checked = false;
-					if (option == "cache.mimeTypes")
-						checked = this.responseCaptureEnabled();
-					
-					child.setAttribute("checked", checked);
-				}
-			}
-		}
-	},
-	
-	responseCaptureEnabled: function() {
-		var mimeTypes = Firebug.getPref(Firebug.prefDomain, FB_CACHE_PREF);
-		if (mimeTypes.indexOf(AMF_MIME) != -1)
-			return true;
-		
-		return false;
-	},
-	
-	openCaptureDialog: function(){
-		openDialog("chrome://amfexplorer/content/captureDialog.xul"
-				,"AMFExplorerCaptureWin"
-				,"dialog"
-				,{FBL:FBL,Firebug:Firebug}); 
-	},
-	
 	// CSS helper
 	addStyleSheet: function(panel)
 	{
@@ -165,13 +131,12 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 			}
 			catch (exc)
 			{
-				if (FBTrace.DBG_REP)
-				{
-					// Debug
+				// Debug
+				if (AMFXTrace.DBG_REP)
 					AMFXTrace.sysout("amfExplorer.getRep FAILS: "+ exc, exc);
-					// Debug
-					AMFXTrace.sysout("amfExplorer.getRep reps["+i+"/"+reps.length+"]: "+(typeof(reps[i])), reps[i]);
-				}
+				// Debug
+				if (AMFXTrace.DBG_REP)
+					AMFXTrace.sysout("amfExplorer.getRep reps["+i+"/"+reps.length+"]: "+(typeof(reps[i])), reps[i]);				
 			}
 		}
 		
@@ -204,7 +169,7 @@ function CacheListener()
 			
 		return AMFUtils.isAmfRequest(request);
 	
-	};
+	};	
 }
 
 CacheListener.prototype = 
@@ -262,19 +227,18 @@ CacheListener.prototype =
 	},
 	
 	invalidate: function(cacheKey)
-	{
-		
+	{		
 		// Debug
 		if (AMFXTrace.DBG_CACHELISTENER)
 			AMFXTrace.sysout("cacheListener.invalidate: " + cacheKey);
-
+		
 		delete this.cache[cacheKey];
+		
 	},
 	
 	onStartRequest: function(context, request, requestContext)
 	{
-		if (AMFUtils.isAmfRequest(request)) {
-			
+		if (AMFUtils.isAmfRequest(request)) {			
 			// Debug
 			if (AMFXTrace.DBG_CACHELISTENER)
 				AMFXTrace.sysout("cacheListener.onStartRequest");
@@ -286,7 +250,6 @@ CacheListener.prototype =
 	
 	onDataAvailable: function(context, request, requestContext, inputStream, offset, count)
 	{
-		
 		
 		if (AMFUtils.isAmfRequest(request)) {
 			
@@ -335,6 +298,7 @@ CacheListener.prototype =
 					AMFXTrace.sysout("cacheListener.onDataAvailable.dataCached: " + cacheKey +" size: " + response.size);
 			} 
 			catch (exc) {
+				// Debug
 				if (AMFXTrace.DBG_CACHELISTENER) 
 					AMFXTrace.sysout("cacheListener.onDataAvailable: ERROR " + AMFUtils.safeGetName(request), exc);
 			}
@@ -367,8 +331,7 @@ CacheListener.prototype =
 					AMFXTrace.sysout("cacheListener.onStopRequest.callSaveStream: " + filename);
 				
 				AMFUtils.saveStream( amfStream, filename );
-			}
-			
+			}			
 		}
 	}
 };
@@ -383,28 +346,7 @@ function NetListener(tabCacheListener)
 
 NetListener.prototype = 
 {
-	onRequest: function(context, file)
-	{
-		// Debug
-		if (AMFXTrace.DBG_NETLISTENER)
-			AMFXTrace.sysout("netListener.onResponse: " + (file ? file.href : ""));
-	},
-
-	onExamineResponse: function(context, request)
-	{
-		// Debug
-		if (AMFXTrace.DBG_NETLISTENER)
-			AMFXTrace.sysout("netListener.onExamineResponse:" + AMFUtils.safeGetName(request));
-	},
-
-	onResponse: function(context, file)
-	{
-		// Debug
-		if (AMFXTrace.DBG_NETLISTENER)
-			AMFXTrace.sysout("netListener.onResponse: " + (file ? file.href : ""));
-	},
-
-	onResponseBody: function(context, file)
+	onResponseBody: function(context, file) 
 	{
 		// Debug
 		if (AMFXTrace.DBG_NETLISTENER)
@@ -424,7 +366,7 @@ NetListener.prototype =
 					if (AMFXTrace.DBG_NETLISTENER) 
 						AMFXTrace.sysout("netListener.onResponseBody.setResponseStream: " + cacheKey, file);
 					
-					//this.tabCacheListener.invalidate(cacheKey);
+					this.tabCacheListener.invalidate(cacheKey);
 			} 
 			catch (exc) {
 				// Debug
@@ -1009,8 +951,7 @@ Firebug.AMFViewerModel.Utils =
 		catch (exc) {
 			// Debug
 			if (AMFXTrace.DBG_CACHELISTENER) 
-				AMFXTrace.sysout("saveResponse ERROR", exc);
-			
+				AMFXTrace.sysout("saveResponse ERROR", exc);			
 		}
 		finally {
 			if (fos) {

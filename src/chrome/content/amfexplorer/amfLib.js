@@ -204,6 +204,11 @@ DataInputStream = Class.extend(
 	 * @ignore
 	 */
 	_stream: null,
+	
+	/**
+	 * @ignore
+	 */
+	_converter: null,
 
 	/**
 	 * @ignore
@@ -224,6 +229,11 @@ DataInputStream = Class.extend(
 		binaryStream.setInputStream(inputStream);
 
 		this._stream = binaryStream;
+		
+		var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].createInstance(Ci.nsIScriptableUnicodeConverter);
+		converter.charset = "UTF-8";
+		
+		this._converter = converter;
 	},
 
 	getInputStream: function() {
@@ -397,23 +407,21 @@ DataInputStream = Class.extend(
 	readUTF: function(length) {
 		if(!length)
 			var length = this.readUnsignedShort();
-
-		var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].createInstance(Ci.nsIScriptableUnicodeConverter);
-		converter.charset = "UTF-8";
-
+		
 		var remaining = length;
-		var ba = [];
-		var count, read;
-
-		while (remaining) {
-			count = this._stream.available();
+		var count = this._stream.available();
+		var ba = [];		
+		var read;
+		
+		while (remaining && count) {			
 			read = (count < remaining) ? count : remaining;
 			chunk = this._stream.readByteArray(read);
 			ba.push.apply(ba, chunk);
 			remaining -= read;
+			count = this._stream.available();
 		}
 
-		var str = converter.convertFromByteArray(ba, ba.length);
+		var str = this._converter.convertFromByteArray(ba, ba.length);
 
 		// Debug
 		if (AMFXTrace.DBG_AMFINPUT)
