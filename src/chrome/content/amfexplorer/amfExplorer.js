@@ -73,10 +73,33 @@ Firebug.AMFExplorer = extend(Firebug.Module,
 	},
 	
 	openAboutDialog: function()
-	{
-		var extensionManager = CCSV("@mozilla.org/extensions/manager;1", "nsIExtensionManager");
-		openDialog("chrome://mozapps/content/extensions/about.xul", "",
-				"chrome,centerscreen,modal", "urn:mozilla:item:amfexplorer@riaforge.org", extensionManager.datasource);
+	{		
+		  try
+	        {
+	            // Firefox 4.0 implements new AddonManager. In case of Firefox 3.6 the module
+	            // is not avaialble and there is an exception.
+	            Components.utils.import("resource://gre/modules/AddonManager.jsm");
+	        }
+	        catch (err)
+	        {
+	        }
+
+	        if (typeof(AddonManager) != "undefined")
+	        {
+	            AddonManager.getAddonByID("amfexplorer@riaforge.org", function(addon) {
+	                openDialog("chrome://mozapps/content/extensions/about.xul", "",
+	                "chrome,centerscreen,modal", addon);
+	            });
+	        }
+	        else
+	        {
+	            var extensionManager = FBL.CCSV("@mozilla.org/extensions/manager;1",
+	                "nsIExtensionManager");
+
+	            openDialog("chrome://mozapps/content/extensions/about.xul", "",
+	                "chrome,centerscreen,modal", "urn:mozilla:item:amfexplorer@riaforge.org",
+	                extensionManager.datasource);
+	        }
 	},
 	
 	// CSS helper
@@ -530,6 +553,7 @@ const SizerRow =
 		TD({width: "70%"})
 	);
 
+
 Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 {
 
@@ -556,15 +580,28 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 			)
 		),
 
-	tag:
+	tag:		
 		TABLE({"class": "domTable", cellpadding: 0, cellspacing: 0, onclick: "$onClick", role: "tree"},
 			TBODY({role: "presentation"},
 				SizerRow,
 				FOR("member", "$object|memberIterator",
 					TAG("$memberRowTag", {member: "$member"})
+				),
+				TR(
+					TD({"class": "amfCopy", colspan: "3"},
+						BUTTON({_amf: "$object", onclick: "$copyAMF"}, 
+								"Copy To Clipboard" 
+						)
+					)
 				)
 			)
 		),
+		
+	copyAMF: function(event) {		
+		var nativeJSON = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON);  
+		var jsonString = nativeJSON.encode(event.target.amf);  
+		copyToClipboard(jsonString);
+	},
 
 	rowTag:
 		FOR("member", "$members",
@@ -584,6 +621,8 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 		if (label && hasClass(row, "hasChildren"))
 		this.toggleRow(row);
 	},
+	
+	
 
 	toggleRow: function(row)
 	{

@@ -1,8 +1,7 @@
 /* global tracing object */
 
-var AMFXTrace = Components.classes["@joehewitt.com/firebug-trace-service;1"]
-		.getService(Components.interfaces.nsISupports)
-		.wrappedJSObject.getTracer("extensions.amfexplorer");
+Components.utils.import("resource://firebug/firebug-trace-service.js");
+var AMFXTrace = traceConsoleService.getTracer("extensions.amfexplorer");
 
 AMFXTrace.setScope(window);
 function clearAMFXTraceScope()

@@ -4,21 +4,24 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
+  
     <em:id>amfexplorer@riaforge.org</em:id>
-    <em:version>0.6</em:version>
+    <em:name>AMF Explorer</em:name>
+    <em:version>0.7</em:version>
+    <em:description>AMF Viewing for Firebug.</em:description>
+    <em:creator>Nathan Mische</em:creator>
+    
+    <em:homepageURL>http://amfexplorer.riaforge.org</em:homepageURL>
+    <em:type>2</em:type>
    
     <!-- Firefox -->
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
         <em:minVersion>3.5</em:minVersion>
-        <em:maxVersion>3.6.*</em:maxVersion>
+        <em:maxVersion>4.0.*</em:maxVersion>
       </Description>
     </em:targetApplication>
 
-    <em:name>AMF Explorer</em:name>
-    <em:description>AMF Viewing for Firebug.</em:description>
-    <em:creator>Nathan Mische</em:creator>
-    <em:homepageURL>http://amfexplorer.riaforge.org</em:homepageURL>
-  </Description>
+   </Description>
 </RDF>

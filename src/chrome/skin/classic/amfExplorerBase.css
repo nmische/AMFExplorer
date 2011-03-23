@@ -1,3 +1,16 @@
 .amfExplorerErrorMsg {
     color: red;
 }
+
+.amfCopy button {
+	background: #FFFFFF -moz-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.1));
+	border: 1px solid #DFDFDF;
+	-moz-border-radius: 3px;
+	color: #363636;
+}
+
+.amfCopy button:hover {
+	background: #FFFFFF -moz-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.2));
+	border: 1px solid #CECECE;
+	color: #000000;
+}

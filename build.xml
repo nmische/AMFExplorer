@@ -68,29 +68,28 @@
 		</copy>
 	</target>
 	
-	<target name="build-chrome-jar" depends="build-xpi-platform" description="create the xpi chrome contents including the chrome jar">
+	<target name="build-xpi-chrome" depends="build-xpi-platform" description="create the xpi chrome contents">
 		<mkdir dir="${build.dir}" />
-		<mkdir dir="${build.dir}/jar" />
 		<mkdir dir="${build.dir}/chrome" />
 
-		<copy todir="${build.dir}/jar">
+		<copy todir="${build.dir}/chrome">
 			<fileset dir="${src.dir}/chrome" includes="content/**, locale/**, skin/**" excludes="${excludes}, **/*.gif, **/trace.js"/>
 		</copy>
 
-		<copy todir="${build.dir}/jar">
+		<copy todir="${build.dir}/chrome">
 			<fileset dir="${src.dir}/chrome" includes="**/*.gif" />
 		</copy>
 
 	</target>	
 
-	<target name="remove-debugging" depends="build-chrome-jar">
+	<target name="remove-debugging" depends="build-xpi-chrome">
 		<!-- remove trace statements -->
 		<replaceregexp match="\n\s*//\s*Debug[^;]+;" replace="" flags="g">
-			<fileset dir="${build.dir}/jar/content/amfexplorer" includes="**/*.js"/>
+			<fileset dir="${build.dir}/chrome/content/amfexplorer" includes="**/*.js"/>
 		</replaceregexp>
 
 		<!-- remove trace include -->
-		<replace file="${build.dir}/jar/content/amfexplorer/amfExplorer.xul">
+		<replace file="${build.dir}/chrome/content/amfexplorer/amfExplorer.xul">
 			<replacetoken><![CDATA[<script src="chrome://amfexplorer/content/trace.js" type="application/x-javascript"/>]]></replacetoken>
 			<replacevalue></replacevalue>
 		</replace>
@@ -100,25 +99,11 @@
 
 	</target>
 
-	<target name="jar-chrome-jar" depends="remove-debugging">
-
-		<zip destfile="${build.dir}/chrome/${name}.jar" 
-			update="true"
-			basedir="${build.dir}/jar"
-			includes="**" />
-
-		<delete dir="${build.dir}/jar" />
-
-	</target>
-
-	<target name="build-xpi" depends="jar-chrome-jar" description="create root xpi contents">
+	<target name="build-xpi" depends="remove-debugging" description="create root xpi contents">
 
 		<copy file="${src.dir}/install.rdf" toDir="${build.dir}" />
 		<copy file="${src.dir}/chrome.manifest" toDir="${build.dir}" />
-		<!--
-		Need to include the space because "chrome/" recursively matches (replace is stupid). 
-		-->
-		<replace file="${build.dir}/chrome.manifest" token=" chrome/" value=" jar:chrome/${name}.jar!/" />
+
 	</target>
 
 	<target name="set-up-dist" depends="build-xpi" description="sets up dist directory">
