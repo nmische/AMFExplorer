@@ -796,7 +796,7 @@ Firebug.AMFViewerModel.Tree = domplate(Firebug.Rep,
 		var tag = rep.shortTag ? rep.shortTag : rep.tag;
 
 		var valueType = typeof(value);
-		var hasChildren = hasProperties(value) && !(value instanceof ErrorCopy) &&
+		var hasChildren = hasProperties(value) &&
 			(valueType == "function" || (valueType == "object" && value != null)
 				|| (valueType == "string" && value.length > Firebug.stringCropLength));
 
