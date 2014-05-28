@@ -2,6 +2,10 @@ function AMFExplorerAMFLib() {}
 
 (function() { with (FBL) { 
 
+// TODO: Update to use Require JS instead of with (FBL)
+const Cc = Components.classes;
+const Ci = Components.interfaces;
+
 const NS_SEEK_SET = 0;
 const NS_SEEK_CUR = 1;
 const NS_SEEK_END = 2;
